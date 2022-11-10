@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="baaab008-3bd2-4b39-8862-1f6cb0dfeacc" name="usbRaspi 192.168.1.18">
+        <fileTransfer rootFolder="/home/pi" accessType="SFTP" host="192.168.1.18" port="22" sshConfigId="da8601f2-d90a-4a49-9acc-019d9bff23f1" sshConfig="pi@192.168.1.18:22 password">
+          <advancedOptions>
+            <advancedOptions controlEncoding="utf-8" dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
