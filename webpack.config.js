@@ -8,7 +8,7 @@ module.exports = {
 		libraryTarget: 'this' // <-- Important
 	},
 	target: 'node', // <-- Important
-	mode: 'development',
+	mode: 'production', // development, production
 	devtool: 'source-map',
 	module: {
 		rules: [
@@ -25,7 +25,7 @@ module.exports = {
 		extensions: [ '.ts', '.tsx', '.js' ]
 	},
 	optimization: {
-		minimize: false
+		minimize: true
 	},
 	externals: [nodeExternals()] // <-- Important
 };

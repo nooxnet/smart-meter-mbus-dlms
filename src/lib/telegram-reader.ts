@@ -1,5 +1,5 @@
-import { TelegramStatus } from "./enums";
-import { Telegram } from "./Telegram";
+import { TelegramState } from "./enums";
+import { Telegram } from "./telegram";
 
 // data link layer
 export class TelegramReader {
@@ -15,8 +15,8 @@ export class TelegramReader {
 	private telegrams: Telegram[] = [];
 
 
-	public areTelegramsAvailable(): TelegramStatus {
-		return this.telegrams.length > 0 ? TelegramStatus.available : TelegramStatus.pending;
+	public areTelegramsAvailable(): TelegramState {
+		return this.telegrams.length > 0 ? TelegramState.available : TelegramState.pending;
 	}
 
 	private resetSearch() {
@@ -24,7 +24,7 @@ export class TelegramReader {
 		this.currentTelegram = new Telegram();
 	}
 
-	public addRawData(newData: number[]): TelegramStatus {
+	public addRawData(newData: number[]): TelegramState {
 		//console.log('addRawData', JSON.stringify(newData));
 		if(!this.possibleStartFound) {
 			const startByteIndex = newData.indexOf(TelegramReader.startByte);
@@ -38,68 +38,67 @@ export class TelegramReader {
 		}
 		this.data.push(...newData);
 		// console.log('addRawData this.data', JSON.stringify(this.data), this.data.length);
-
-
 		return this.checkTelegram()
 	}
 
 	// only fetch them once!
 	public getTelegrams(): Telegram[] {
-		console.log('getTelegrams this.telegrams.length', this.telegrams.length);
 		const ret = [...this.telegrams];
-		console.log('getTelegrams ret.length 1', ret.length);
 		this.telegrams = [];
-		console.log('getTelegrams ret.length 2', ret.length);
 		return ret;
 	}
 
-	private checkTelegram(): TelegramStatus {
+	private checkTelegram(): TelegramState {
 		if(this.data.length < 4){
 			return this.areTelegramsAvailable();
 		}
 
-		if(this.currentTelegram.dataLen <= 0) {
+		if(this.currentTelegram.lengthData <= 0) {
 			// check for telegram start sequence
 			if(this.data[3] != TelegramReader.startByte || this.data[1] != this.data[2]) {
 				return this.checkForNewStartIndex(1);
 			}
-			this.currentTelegram.dataLen = this.data[1];
+			this.currentTelegram.lengthData = this.data[1];
 		}
 
-		if(this.currentTelegram.dataLen <= 3) {
+		if(this.currentTelegram.lengthData <= 3) {
 			// control frame -> ignore
 			return this.checkForNewStartIndex(1);
 		}
 
 		// long frame
 
-		if(this.data.length < this.currentTelegram.totalLen!) {
+		if(this.data.length < this.currentTelegram.lengthTotal!) {
 			return this.areTelegramsAvailable();
 		}
 
-		if(this.data[this.currentTelegram.totalLen - 1] != TelegramReader.stopByte) {
+		if(this.data[this.currentTelegram.lengthTotal - 1] != TelegramReader.stopByte) {
 			return this.checkForNewStartIndex(1);
 		}
 
 		const calculatedChecksum = this.checkChecksum();
-		this.currentTelegram.checkSum = this.data[this.currentTelegram.totalLen! - 2];
+		this.currentTelegram.checkSum = this.data[this.currentTelegram.lengthTotal! - 2];
 		if(calculatedChecksum != this.currentTelegram.checkSum) {
 			console.warn('Invalid checksum', calculatedChecksum, this.currentTelegram.checkSum);
 			return this.checkForNewStartIndex(1);
 		}
 
 		// seems like everything is fine - set telegram fields
-		this.currentTelegram.controlField = this.data[4];
-		this.currentTelegram.addressField = this.data[5];
-		this.currentTelegram.controlInformationField = this.data[6];
+		// rest of data link layer data:
+		this.currentTelegram.controlField = this.data[4];   // should be 0x53 (83 dec)
+		this.currentTelegram.addressField = this.data[5];   // should be 0xFF (255 dec) Broadcast without reply
 
-		this.currentTelegram.userData = this.data.slice(6, this.currentTelegram.dataLen - 2);
+		// transport layer data:
+		this.currentTelegram.controlInformationField = this.data[6];
+		this.currentTelegram.sourceAddress = this.data[7];
+		this.currentTelegram.destinationAddress = this.data[8];
+
+		// application layer data:
+		this.currentTelegram.applicationData = this.data.slice(9, this.currentTelegram.lengthTotal - 2);
 
 		// reset for next telegram
-		console.log('checkTelegram this.currentTelegram', this.currentTelegram);
 		this.telegrams.push(this.currentTelegram);
-		console.log('checkTelegram this.telegrams.length', this.telegrams.length);
-		const len = this.currentTelegram.totalLen;
+		const len = this.currentTelegram.lengthTotal;
 		this.resetSearch();
 		if(this.data.length > len) {
 			this.data = this.data.slice(len)
@@ -109,10 +108,10 @@ export class TelegramReader {
 
 		this.data = [];
 		//return this.areTelegramsAvailable()
-		return TelegramStatus.available;
+		return TelegramState.available;
 	}
 
-	private checkForNewStartIndex(firstPossibleIndex: number): TelegramStatus {
+	private checkForNewStartIndex(firstPossibleIndex: number): TelegramState {
 		this.resetSearch();
 		const newStartByteIndex= this.data.indexOf(TelegramReader.startByte, firstPossibleIndex);
 		if(newStartByteIndex < firstPossibleIndex) {
@@ -126,7 +125,7 @@ export class TelegramReader {
 
 	private checkChecksum() {
 		const start = 4;
-		const end = this.currentTelegram.totalLen! - 2;
+		const end = this.currentTelegram.lengthTotal! - 2;
 		let sum = 0;
 		for(let i = start; i < end; i++) {
 			sum += this.data[i];

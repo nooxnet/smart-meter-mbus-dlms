@@ -1,9 +1,10 @@
 import { SerialPort } from 'serialport';
+//import * as crypto from "crypto";
 
 import { Settings } from './utils/interfaces';
-import { SerialPortData } from "./lib/interfaces";
 import { TelegramReader } from "./lib/telegram-reader";
-import { TelegramStatus } from "./lib/enums";
+import { ApplicationDataState, TelegramState } from "./lib/enums";
+import { MultiTelegramReader } from "./lib/multi-telegram-reader";
 
 const settings: Settings = {
 	// serial port settings
@@ -25,6 +26,7 @@ function main() {
 	});
 
 	const telegramReader = new TelegramReader();
+	const multiTelegramReader = new MultiTelegramReader(telegramReader);
 
 	// Read data that is available but keep the stream in "paused mode"
 	// port.on('readable', function () {
@@ -43,10 +45,16 @@ function main() {
 		// }
 		// console.log(output);
 		console.log([...serialPortData])
-		const result = telegramReader.addRawData([...serialPortData])
-		if(result == TelegramStatus.available) {
+		const telegramResultState = telegramReader.addRawData([...serialPortData])
+		if(telegramResultState == TelegramState.available) {
 			const telegrams = telegramReader.getTelegrams();
 			console.log(JSON.stringify(telegrams))
+
+			const applicationDataUnitState = multiTelegramReader.addTelegrams(telegrams);
+			if(applicationDataUnitState == ApplicationDataState.available) {
+				const applicationDataUnits = multiTelegramReader.getApplicationDataUnits();
+				console.log(JSON.stringify(applicationDataUnits))
+			}
 		}
 	})
 
@@ -60,7 +68,11 @@ function main() {
 	})
 }
 
+//console.log(crypto.getCiphers())
+
 main();
+
+
 
 //Benchmark.bufferArrayBenchmark();
 

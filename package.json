@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^18.11.9",
     "@types/serialport": "^8.0.2",
     "serialport": "^10.4.0"
   },
