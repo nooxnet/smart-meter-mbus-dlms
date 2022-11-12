@@ -7,7 +7,6 @@ import { DebugSettings, SerialPortSettings, Settings } from "./lib/settings/sett
 import { Telegram } from "./lib/telegram";
 import { ApplicationProtocolDataUnit } from "./lib/application-protocol-data-unit";
 
-
 let logSerialPortBuffers: Buffer[] = [];
 let logSerialPortByteCount = 0;
 let serialPortByteCount = 0;
@@ -31,15 +30,12 @@ function main() {
 	const telegramReader = new TelegramReader();
 	const multiTelegramReader = new MultiTelegramReader(telegramReader);
 
-	// Switches the port into "flowing mode"
 	port.on('data', function (serialPortData: Buffer) {
-
-		serialPortByteCount += serialPortData.length;
-
 		if(DebugSettings.logSerialPort) {
 			logSerialPortData(serialPortData);
 		}
 
+		serialPortByteCount += serialPortData.length;
 
 		const telegramResultState = telegramReader.addRawData(serialPortData);
 		if(telegramResultState == TelegramState.available) {

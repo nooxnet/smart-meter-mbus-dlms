@@ -3,7 +3,6 @@ import { Telegram } from "./telegram";
 import { ReceiveBuffer } from "./receive-buffer";
 
 // data link layer
-
 export class TelegramReader {
 
 	static readonly startByte: number = 0x68;
@@ -18,14 +17,8 @@ export class TelegramReader {
 
 	private telegrams: Telegram[] = [];
 
-
 	public areTelegramsAvailable(): TelegramState {
 		return this.telegrams.length > 0 ? TelegramState.available : TelegramState.pending;
-	}
-
-	private resetSearch() {
-		this.possibleStartFound =false;
-		this.currentTelegram = new Telegram();
 	}
 
 	public addRawData(newData: Buffer): TelegramState {
@@ -39,8 +32,9 @@ export class TelegramReader {
 			this.possibleStartFound = true;
 		}
 		if(!this.receiveBuffer.addBuffer(newData, sourceStart)) {
+			// buffer overflow (receiveBufferMaxSize), ignore data and carry on
 			this.receiveBuffer.reset();
-			return this.checkTelegram()
+			return this.areTelegramsAvailable();
 		}
 		// console.log('TelegramReader.addRawData this.data', JSON.stringify(this.data), this.data.length);
 		return this.checkTelegram()
@@ -51,6 +45,11 @@ export class TelegramReader {
 		const ret = [...this.telegrams];
 		this.telegrams = [];
 		return ret;
+	}
+
+	private resetSearch() {
+		this.possibleStartFound =false;
+		this.currentTelegram = new Telegram();
 	}
 
 	private checkTelegram(): TelegramState {
@@ -73,7 +72,7 @@ export class TelegramReader {
 
 		// long frame
 
-		if(this.receiveBuffer.length < this.currentTelegram.lengthTotal!) {
+		if(this.receiveBuffer.length < this.currentTelegram.lengthTotal) {
 			return this.areTelegramsAvailable();
 		}
 
@@ -82,13 +81,15 @@ export class TelegramReader {
 		}
 
 		const calculatedChecksum = this.checkChecksum();
-		this.currentTelegram.checkSum = this.receiveBuffer.buffer[this.currentTelegram.lengthTotal! - 2];
+		this.currentTelegram.checkSum = this.receiveBuffer.buffer[this.currentTelegram.lengthTotal - 2];
 		if(calculatedChecksum != this.currentTelegram.checkSum) {
 			console.warn('Invalid checksum', calculatedChecksum, this.currentTelegram.checkSum);
 			return this.checkForNewStartIndex();
 		}
 
 		// seems like everything is fine - set telegram fields
+		this.currentTelegram.telegramRaw = this.receiveBuffer.buffer.subarray(0, this.currentTelegram.lengthTotal);
+
 		// rest of data link layer data:
 		this.currentTelegram.controlField = this.receiveBuffer.buffer[4];   // should be 0x53 (83 dec)
 		this.currentTelegram.addressField = this.receiveBuffer.buffer[5];   // should be 0xFF (255 dec) Broadcast without reply
@@ -100,8 +101,6 @@ export class TelegramReader {
 
 		// application layer data:
 		this.currentTelegram.applicationData = this.receiveBuffer.buffer.subarray(9, this.currentTelegram.lengthTotal - 2);
-
-		this.currentTelegram.telegramRaw = this.receiveBuffer.buffer.subarray(0, this.currentTelegram.lengthTotal);
 
 		// reset for next telegram
 		this.telegrams.push(this.currentTelegram);
@@ -125,8 +124,8 @@ export class TelegramReader {
 		if(!this.receiveBuffer.checkForNewStartIndex(TelegramReader.startByte)) {
 			return this.areTelegramsAvailable();
 		}
-
 		this.possibleStartFound = true;
+		// recursive - if multiple telegrams are within the raw data added at once
 		return this.checkTelegram();
 	}
 

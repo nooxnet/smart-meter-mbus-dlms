@@ -6,7 +6,6 @@ export class ReceiveBuffer {
 		return this._length;
 	}
 
-
 	public constructor(public initialSize: number, public maxSize: number = 8192) {
 		this.buffer = Buffer.allocUnsafe(initialSize);
 	}
@@ -35,21 +34,6 @@ export class ReceiveBuffer {
 		this._length = newLength;
 		return true;
 	}
-
-	// public removeStartTelegram(telegramLength: number) {
-	// 	if(this._length <= telegramLength) {
-	// 		this.buffer = Buffer.allocUnsafe(this.initialSize);
-	// 		this._length = 0;
-	// 		return;
-	// 	}
-	//
-	// 	const oldBuffer = this.buffer.subarray(0, this._length);
-	// 	this.buffer = Buffer.allocUnsafe(this.initialSize);
-	// 	this._length = 0;
-	// 	if(this._length > telegramLength) {
-	// 		this.addBuffer(oldBuffer, telegramLength)
-	// 	}
-	// }
 
 	public checkForNewStartIndex(startByte: number): boolean {
 		const firstPossibleIndex = 1;
