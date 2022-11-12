@@ -9,7 +9,7 @@ export class ApplicationDataDecrypter {
 		console.log('applicationDataUnit.apduBuffer hex', applicationDataUnit.apduBuffer.toString('hex'))
 		//console.log('applicationDataUnit.encryptedPayload base64', applicationDataUnit.encryptedPayload.toString('base64'))
 		console.log('applicationDataUnit.encryptedPayload hex', applicationDataUnit.encryptedPayload.toString('hex'))
-		// const key = Buffer.from('***REMOVED***', 'hex');
+		// const key = Buffer.from('blabla', 'hex');
 		// const iv = Buffer.concat([Buffer.from('00000000', 'hex'), applicationDataUnit.systemTitle, applicationDataUnit.frameCounter]);
 		// //const iv = Buffer.concat([applicationDataUnit.systemTitle, applicationDataUnit.frameCounter, Buffer.from('00000000', 'hex')]);
 		// console.log(`iv: \t${iv.toString('hex')}`);
