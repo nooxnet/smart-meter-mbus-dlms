@@ -8,7 +8,7 @@ import { ApplicationDataDecrypter } from "./application-data-decrypter";
 export class MultiTelegramReader {
 	// either use addRawData or addTelegrams - not both
 
-	private static readonly CypheringServiceGeneralGloCiphering = 0xDB;
+	private static readonly cypheringServiceGeneralGloCiphering = 0xDB;
 
 	private applicationDataUnits: ApplicationProtocolDataUnit[] = [];
 	private currentApplicationDataUnit = new ApplicationProtocolDataUnit();
@@ -17,7 +17,7 @@ export class MultiTelegramReader {
 	private currentSequenceNumber = 0;
 
 	// telegramReader would not be needed if addTelegram() is not used, but then it has to be defined in the calling code anyway
-	constructor(private telegramReader: TelegramReader, private provisioning: ApplicationDataProvisioning = ApplicationDataProvisioning.lastOnly) {
+	constructor(private telegramReader: TelegramReader, private provisioning: ApplicationDataProvisioning = ApplicationDataProvisioning.all) {
 	}
 
 	public areApplicationDataUnitsAvailable(): ApplicationDataState {
@@ -49,8 +49,8 @@ export class MultiTelegramReader {
 				}
 
 				this.currentApplicationDataUnit.cypheringService = newTelegram.applicationData[0];
-				if (this.currentApplicationDataUnit.cypheringService != MultiTelegramReader.CypheringServiceGeneralGloCiphering) {
-					console.warn(`addTelegrams: Application data cyphering service invalid. Start over. Expected: ${MultiTelegramReader.CypheringServiceGeneralGloCiphering.toString(16)}. Received: ${this.currentApplicationDataUnit.cypheringService.toString(16)}`);
+				if (this.currentApplicationDataUnit.cypheringService != MultiTelegramReader.cypheringServiceGeneralGloCiphering) {
+					console.warn(`addTelegrams: Application data cyphering service invalid. Start over. Expected: ${MultiTelegramReader.cypheringServiceGeneralGloCiphering.toString(16)}. Received: ${this.currentApplicationDataUnit.cypheringService.toString(16)}`);
 					this.resetSearch();
 					continue;
 				}
