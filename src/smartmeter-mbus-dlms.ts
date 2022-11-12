@@ -44,8 +44,9 @@ function main() {
 		// 	output += property + ': ' + serialPortData[property] + '; ';
 		// }
 		// console.log(output);
-		console.log([...serialPortData])
-		const telegramResultState = telegramReader.addRawData([...serialPortData])
+		//console.log([...serialPortData])
+		//const telegramResultState = telegramReaderArray.addRawData([...serialPortData])
+		const telegramResultState = telegramReader.addRawData(serialPortData);
 		if(telegramResultState == TelegramState.available) {
 			const telegrams = telegramReader.getTelegrams();
 			console.log(JSON.stringify(telegrams))

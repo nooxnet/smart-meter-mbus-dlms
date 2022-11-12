@@ -6,18 +6,18 @@ export class ApplicationProtocolDataUnit {
 
 	public systemTitleLength: number;
 
-	private _systemTitle: number[];
+	private _systemTitle: Buffer;
 	private _systemTitleManufacturerId: string;
 	private _serialNumber: string;
-	public setSystemTitle(rawData: number[]) {
-		this. _systemTitle = rawData;
-		this._systemTitleManufacturerId = Tools.getStringFromByteArray(rawData.slice(0, 3));
+	public setSystemTitle(rawData: Buffer) {
+		this._systemTitle = rawData;
+		this._systemTitleManufacturerId = rawData.subarray(0, 3).toString();
 
 		// serial number. at least for my KAIFA MA309M it seems to be:
 		if(this._systemTitleManufacturerId == 'KFM') {
 			let first = rawData[3].toString(16).padStart(2, '0');
 			let second = rawData[4].toString(16).padStart(2, '0');
-			let rest = Tools.getNumberFromByteArray(rawData.slice(5, 8)).toString().padStart(7, '0');
+			let rest = Tools.getNumberFromBuffer(rawData, 5, 8).toString().padStart(7, '0');
 			this._serialNumber = first[0] + this._systemTitleManufacturerId + first[1] + second + rest;
 		} else {
 			// just a guess ...
@@ -31,16 +31,16 @@ export class ApplicationProtocolDataUnit {
 			let second = ''
 
 			if(i > 0) {
-				first = Tools.getStringFromByteArray(rawData.slice(3, 3 + i));
+				first = rawData.subarray(3, 3 + i).toString();
 			}
 			if(3 + i < 8) {
 				let padLength = (256 ** (5 - i)).toString().length;
-				second = Tools.getNumberFromByteArray(rawData.slice(3 + i, 8)).toString().padStart(padLength, '0');
+				second = Tools.getNumberFromByteArray([...rawData.subarray(3 + i, 8)]).toString().padStart(padLength, '0');
 			}
 			this._serialNumber = this._systemTitleManufacturerId + first + second;
 		}
 	}
-	public get systemTitle(): number[] {
+	public get systemTitle(): Buffer {
 		return this._systemTitle;
 	}
 	public get systemTitleManufacturerId(): string {
@@ -51,13 +51,14 @@ export class ApplicationProtocolDataUnit {
 	private _lengthTotal: number;
 	private _lengthEncryptedPayload: number;
 	private _lengthField: number;
-	public setLength(rawData: number[]): number {
-		// length field is variable! 1 or 3 bytes long
-		if(rawData[0] == 0x82) {
-			this._lengthField = Tools.getNumberFromByteArray(rawData.slice(1));
+	public setLength(buffer: Buffer, start = 0, end?: number): number {
+		if(end == undefined) end = buffer.length;
+		// length of length field is variable: 1 or 3 bytes long
+		if(buffer[start] == 0x82) {     // 130
+			this._lengthField = Tools.getNumberFromBuffer(buffer, start + 1, end);
 			this._lengthFieldLength = 3;
 		} else {
-			this._lengthField = rawData[0];
+			this._lengthField = buffer[start];
 			this._lengthFieldLength = 1;
 		}
 		this._lengthEncryptedPayload = this._lengthField - 5;
@@ -113,14 +114,23 @@ export class ApplicationProtocolDataUnit {
 		return this._securityCompression;
 	}
 
-
-	private _frameCounter: number;
-	public setFrameCounter(rawData: number[]) {
-		this._frameCounter = Tools.getNumberFromByteArray(rawData);
+	private _frameCounter: Buffer
+	private _frameCounterNumber: number;
+	public setFrameCounter(buffer: Buffer, start: number = 0, end?: number) {
+		this._frameCounter = buffer.subarray(start, end);
+		this._frameCounterNumber = Tools.getNumberFromBuffer(this._frameCounter);
 	}
-	public get frameCounter(): number {
+	public get frameCounter(): Buffer {
 		return this._frameCounter;
 	}
+	public get frameCounterNumber(): number {
+		return this._frameCounterNumber;
+	}
 
-	public encryptedPayload: number[] = [];
+
+	public apduBuffer: Buffer;
+
+	public encryptedPayload: Buffer;
+
+	public decryptedPayload: Buffer;
 }

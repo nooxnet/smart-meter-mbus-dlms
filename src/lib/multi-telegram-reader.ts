@@ -2,6 +2,7 @@ import { ApplicationDataProvisioning, ApplicationDataState, TelegramState } from
 import { TelegramReader } from "./telegram-reader";
 import { Telegram } from "./telegram";
 import { ApplicationProtocolDataUnit } from "./application-protocol-data-unit";
+import { ApplicationDataDecrypter } from "./application-data-decrypter";
 
 // transport layer - reads APDUs (application protocol data unit) from one or more TPDU (transport protocol data unit)
 export class MultiTelegramReader {
@@ -11,6 +12,7 @@ export class MultiTelegramReader {
 
 	private applicationDataUnits: ApplicationProtocolDataUnit[] = [];
 	private currentApplicationDataUnit = new ApplicationProtocolDataUnit();
+	private currentApplicationDataUnits: Buffer[] = [];
 
 	private currentSequenceNumber = 0;
 
@@ -22,7 +24,7 @@ export class MultiTelegramReader {
 		return this.applicationDataUnits.length > 0 ? ApplicationDataState.available : ApplicationDataState.pending;
 	}
 
-	public addRawData(newData: number[]): ApplicationDataState {
+	public addRawData(newData: Buffer): ApplicationDataState {
 		const telegramStatus = this.telegramReader.addRawData(newData);
 		if (telegramStatus == TelegramState.available) {
 			const telegrams = this.telegramReader.getTelegrams();
@@ -54,19 +56,22 @@ export class MultiTelegramReader {
 					continue;
 				}
 
-				this.currentApplicationDataUnit.setSystemTitle(newTelegram.applicationData.slice(2, 10));
+				this.currentApplicationDataUnit.setSystemTitle(newTelegram.applicationData.subarray(2, 10));
 
 				// length filed has either 1 byte (length <= 127) or 3 bytes
-				const lengthFieldLength = this.currentApplicationDataUnit.setLength(newTelegram.applicationData.slice(10, 13));
+				const lengthFieldLength = this.currentApplicationDataUnit.setLength(newTelegram.applicationData,10, 13);
 				const offset = lengthFieldLength - 1
 
 				this.currentApplicationDataUnit.securityControl = newTelegram.applicationData[11 + offset];
-				this.currentApplicationDataUnit.setFrameCounter(newTelegram.applicationData.slice(12 + offset, 16 + offset));
+				this.currentApplicationDataUnit.setFrameCounter(newTelegram.applicationData, 12 + offset, 16 + offset);
 
-				this.currentApplicationDataUnit.encryptedPayload = newTelegram.applicationData.slice(16 + offset);
-			} else {
-				this.currentApplicationDataUnit.encryptedPayload.push(...newTelegram.applicationData);
+				//this.currentApplicationDataUnit.encryptedPayload = newTelegram.applicationData.subarray(16 + offset);
+				//this.currentEncryptedPayloads.push(newTelegram.applicationData.subarray(16 + offset));
+			// } else {
+			// 	//this.currentApplicationDataUnit.encryptedPayload(...newTelegram.applicationData);
+			// 	this.currentApplicationDataUnits.push(newTelegram.applicationData);
 			}
+			this.currentApplicationDataUnits.push(newTelegram.applicationData);
 
 			if (!newTelegram.isLastSegment) {
 				this.currentSequenceNumber++;
@@ -74,6 +79,12 @@ export class MultiTelegramReader {
 			}
 
 			// last segment:
+
+			this.currentApplicationDataUnit.apduBuffer = Buffer.concat(this.currentApplicationDataUnits);
+			this.currentApplicationDataUnit.encryptedPayload = this.currentApplicationDataUnit.apduBuffer.subarray(16 + this.currentApplicationDataUnit.lengthFieldLength - 1)
+
+			ApplicationDataDecrypter.Decrypt(this.currentApplicationDataUnit);
+
 			if (this.currentApplicationDataUnit.lengthEncryptedPayload != this.currentApplicationDataUnit.encryptedPayload.length) {
 				console.warn(`addTelegrams: Application data length of combined segments invalid. Start over. Expected: ${this.currentApplicationDataUnit.lengthEncryptedPayload}. Received: ${this.currentApplicationDataUnit.encryptedPayload.length}`);
 				console.log(JSON.stringify(this.currentApplicationDataUnit));
@@ -101,5 +112,6 @@ export class MultiTelegramReader {
 	private resetSearch() {
 		this.currentSequenceNumber = 0;
 		this.currentApplicationDataUnit = new ApplicationProtocolDataUnit();
+		this.currentApplicationDataUnits = [];
 	}
 }

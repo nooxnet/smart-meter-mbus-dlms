@@ -7,9 +7,9 @@ export class Tools {
 
 	public static getNumberFromByteArray(bytes: number[]): number {
 		let result = 0;
-		for(let i = bytes.length - 1, multiplicator = 1; i >= 0; i--) {
-			result += bytes[i] * multiplicator;
-			multiplicator *= 256;
+		for(let i = bytes.length - 1, multiplier = 1; i >= 0; i--) {
+			result += bytes[i] * multiplier;
+			multiplier *= 256;
 		}
 		return result;
 	}
@@ -34,5 +34,14 @@ export class Tools {
 		return hexStrings.join(withSpaces ? ' ' : '');
 	}
 
+	public static getNumberFromBuffer(buffer: Buffer, start = 0, end?: number): number {
+		if(end == undefined) end = buffer.length;
+		let result = 0;
+		for(let i = end - 1, multiplier = 1; i >= start; i--) {
+			result += buffer[i] * multiplier;
+			multiplier *= 256;
+		}
+		return result;
+	}
 
 }
