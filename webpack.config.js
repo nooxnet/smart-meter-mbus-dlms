@@ -1,4 +1,5 @@
 const nodeExternals = require('webpack-node-externals');
+const webpack = require("webpack");
 
 module.exports = {
 	entry: './src/smartmeter-mbus-dlms.ts',
@@ -27,5 +28,8 @@ module.exports = {
 	optimization: {
 		minimize: true
 	},
-	externals: [nodeExternals()] // <-- Important
+	externals: [nodeExternals()], // <-- Important
+	plugins: [
+		new webpack.DefinePlugin({ CONFIG: JSON.stringify(require("config")) })
+	]
 };

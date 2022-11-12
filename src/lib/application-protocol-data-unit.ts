@@ -8,17 +8,19 @@ export class ApplicationProtocolDataUnit {
 
 	private _systemTitle: Buffer;
 	private _systemTitleManufacturerId: string;
-	private _serialNumber: string;
+	private _systemTitleText: string;
+	private _serialNumber: number;
 	public setSystemTitle(rawData: Buffer) {
 		this._systemTitle = rawData;
 		this._systemTitleManufacturerId = rawData.subarray(0, 3).toString();
+		this._serialNumber= Tools.getNumberFromBuffer(rawData, 5, 8);
 
-		// serial number. at least for my KAIFA MA309M it seems to be:
+		// system title text. at least for my KAIFA MA309M it seems to be:
 		if(this._systemTitleManufacturerId == 'KFM') {
 			let first = rawData[3].toString(16).padStart(2, '0');
 			let second = rawData[4].toString(16).padStart(2, '0');
 			let rest = Tools.getNumberFromBuffer(rawData, 5, 8).toString().padStart(7, '0');
-			this._serialNumber = first[0] + this._systemTitleManufacturerId + first[1] + second + rest;
+			this._systemTitleText = first[0] + this._systemTitleManufacturerId + first[1] + second + rest;
 		} else {
 			// just a guess ...
 			// if first letters after manufacturer ids are alphanumeric, treat it as characters
@@ -37,7 +39,7 @@ export class ApplicationProtocolDataUnit {
 				let padLength = (256 ** (5 - i)).toString().length;
 				second = Tools.getNumberFromByteArray([...rawData.subarray(3 + i, 8)]).toString().padStart(padLength, '0');
 			}
-			this._serialNumber = this._systemTitleManufacturerId + first + second;
+			this._systemTitleText = this._systemTitleManufacturerId + first + second;
 		}
 	}
 	public get systemTitle(): Buffer {
@@ -45,6 +47,9 @@ export class ApplicationProtocolDataUnit {
 	}
 	public get systemTitleManufacturerId(): string {
 		return this._systemTitleManufacturerId;
+	}
+	public get systemTitleText(): string {
+		return this._systemTitleText;
 	}
 
 	private _lengthFieldLength: number;
@@ -127,10 +132,10 @@ export class ApplicationProtocolDataUnit {
 		return this._frameCounterNumber;
 	}
 
-
-	public apduBuffer: Buffer;
-
 	public encryptedPayload: Buffer;
 
 	public decryptedPayload: Buffer;
+
+	// raw APDU data
+	public apduRaw: Buffer;
 }

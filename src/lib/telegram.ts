@@ -33,27 +33,24 @@ export class Telegram {
 
 
 	// transport layer
-	// TPDU (transport protocol data units)
+	// TPDU (transport protocol data unit)
 
 	private _controlInformationField: number = 0;
 	private _sequenceNumber: number = 0;
 	private _isLastSegment: boolean = true; // or application data is only in one single telegram
 
+	// CI field:
 	public set controlInformationField(ciField: number) {
 		this._controlInformationField = ciField;
 		this._sequenceNumber = this._controlInformationField & 0b00001111;
 		this._isLastSegment = (this._controlInformationField & 0b00010000) == 0b00010000;
 	}
-
-	// CI field:
 	public get controlInformationField(): number {
 		return this._controlInformationField;
 	}
-
 	public get sequenceNumber(): number {
 		return this._sequenceNumber;
 	}
-
 	public get isLastSegment(): boolean {
 		return this._isLastSegment;
 	}
@@ -61,11 +58,11 @@ export class Telegram {
 	public sourceAddress: number = 0;           // STSAP (source transport service access point)
 	public destinationAddress: number = 0;  	// DTSAP (destination transport service access point)
 
-
 	// application layer
 	// APDU (application protocol data unit)
-	// can be incomplete if split up in multiple segments in multiple telegrams
+	// may be incomplete if split up into multiple segments in multiple telegrams
 	public applicationData: Buffer;
 
-
+	// raw telegram data
+	public telegramRaw: Buffer;
 }

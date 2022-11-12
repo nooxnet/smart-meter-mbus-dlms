@@ -1,3 +1,5 @@
 # Project exclude paths
 /.
 /node_modules/
+
+/config/default.json5

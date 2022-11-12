@@ -1,70 +1,38 @@
 import * as crypto from "crypto";
 
 import { ApplicationProtocolDataUnit } from "./application-protocol-data-unit";
+import { DecryptionSettings } from "./settings/setting-classes";
 
 export class ApplicationDataDecrypter {
 
 	public static Decrypt(applicationDataUnit: ApplicationProtocolDataUnit): void {
-		console.log(applicationDataUnit);
-		console.log('applicationDataUnit.apduBuffer hex', applicationDataUnit.apduBuffer.toString('hex'))
-		//console.log('applicationDataUnit.encryptedPayload base64', applicationDataUnit.encryptedPayload.toString('base64'))
-		console.log('applicationDataUnit.encryptedPayload hex', applicationDataUnit.encryptedPayload.toString('hex'))
-		// const key = Buffer.from('blabla', 'hex');
-		// const iv = Buffer.concat([Buffer.from('00000000', 'hex'), applicationDataUnit.systemTitle, applicationDataUnit.frameCounter]);
-		// //const iv = Buffer.concat([applicationDataUnit.systemTitle, applicationDataUnit.frameCounter, Buffer.from('00000000', 'hex')]);
-		// console.log(`iv: \t${iv.toString('hex')}`);
-		//
-		//
-		// const decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
-		//
-		// const update = decipher.update(applicationDataUnit.encryptedPayload);
-		// console.log('update', update.toString('hex'));
-		// console.log('update', update.toString('utf-8'));
-		//
-		// const final =  decipher.final();
-		// console.log('final', final.toString('hex'));
-		// console.log('final', final.toString('utf-8'));
-		//
-		// applicationDataUnit.decryptedPayload = Buffer.concat([update, final]);
-		//
-		// console.log(`Decrypted: \t${applicationDataUnit.decryptedPayload.toString('hex')}`);
-		// console.log(`Decrypted: \t"${applicationDataUnit.decryptedPayload.toString('utf-8')}"`);
-		// console.log(`Decrypted: \t"${applicationDataUnit.decryptedPayload.toString()}"`);
+		//console.log(applicationDataUnit);
+		//console.log('applicationDataUnit.apduBuffer hex', applicationDataUnit.apduBuffer.toString('hex'))
+		//console.log('applicationDataUnit.encryptedPayload hex', applicationDataUnit.encryptedPayload.toString('hex'))
 
-		const key = Buffer.from('blalbla', 'hex');
+		const key = Buffer.from(DecryptionSettings.key, 'hex');
 		const iv = Buffer.concat([applicationDataUnit.systemTitle, applicationDataUnit.frameCounter]);
-		//const iv = Buffer.concat([Buffer.from('00000000', 'hex'), applicationDataUnit.systemTitle, applicationDataUnit.frameCounter]);
-		let authTagLength = 12;
 
-		let encryptedDataLen = applicationDataUnit.encryptedPayload.length
-		//let authTag = applicationDataUnit.encryptedPayload.subarray(encryptedDataLen - authTagLength, encryptedDataLen);
-		const authTag = Buffer.alloc(authTagLength);
-		authTag.fill(0);
-		//const cipher = crypto.createCipheriv('aes-128-gcm', key, iv);
-		//const authTag = cipher.getAuthTag().toString("hex");  // <- new
-
+		// the documentation says that the smart meter uses 'aes-128-gcm' but actually without authTag.
+		// node crypto gets the encrypted data on "update" if a 12 byte authTag with all "00" is used,
+		// but it fails on "final".
+		//let authTagLength = 12;
+		//const authTag = Buffer.alloc(authTagLength);
+		//authTag.fill(0);
 		//let decipher = crypto.createDecipheriv('aes-128-gcm', key, iv, { authTagLength });
 		//decipher.setAuthTag(authTag);
-		const ctriv = Buffer.concat([iv, Buffer.from("00000002", 'hex')]);
-		let decipher = crypto.createDecipheriv('aes-128-ctr', key, ctriv);
 
-		//decipher.setAAD(authTag);
-		//decipher.setAuthTag(Buffer.from(authTag, 'hex'));
+		// workaround: use 'aes-128-ctr' with additional 4 bytes of iv like so:
+		const ctrIv = Buffer.concat([iv, Buffer.from("00000002", 'hex')]);
+		let decipher = crypto.createDecipheriv('aes-128-ctr', key, ctrIv);
 
 		const update = decipher.update(applicationDataUnit.encryptedPayload);
-		//console.log('update', update.toString());
-		console.log('update', update.toString('hex'));
-		//console.log('update', update.toString('utf-8'));
+		//console.log('update', update.toString('hex'));
 
 		const final = decipher.final();
-		//console.log('final', final.toString());
-		console.log('final', final.toString('hex'));
-		// console.log('final', final.toString('utf-8'));
+		//console.log('final', final.toString('hex'));
+
 		applicationDataUnit.decryptedPayload = Buffer.concat([update, final]);
-
-		console.log(`Decrypted: \t${applicationDataUnit.decryptedPayload.toString('hex')}`);
-		console.log(`Decrypted: \t"${applicationDataUnit.decryptedPayload.toString('utf-8')}"`);
-		console.log(`Decrypted: \t"${applicationDataUnit.decryptedPayload.toString()}"`);
-
+		//console.log(`Decrypted: \t${applicationDataUnit.decryptedPayload.toString('hex')}`);
 	}
 }

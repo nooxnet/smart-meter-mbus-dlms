@@ -6,7 +6,7 @@ import { ApplicationDataDecrypter } from "./application-data-decrypter";
 
 // transport layer - reads APDUs (application protocol data unit) from one or more TPDU (transport protocol data unit)
 export class MultiTelegramReader {
-	// either use addRawData or addTelegrams
+	// either use addRawData or addTelegrams - not both
 
 	private static readonly CypheringServiceGeneralGloCiphering = 0xDB;
 
@@ -32,7 +32,6 @@ export class MultiTelegramReader {
 		}
 		return this.areApplicationDataUnitsAvailable();
 	}
-
 
 	public addTelegrams(newTelegrams: Telegram[]): ApplicationDataState {
 		for (let newTelegram of newTelegrams) {
@@ -64,12 +63,6 @@ export class MultiTelegramReader {
 
 				this.currentApplicationDataUnit.securityControl = newTelegram.applicationData[11 + offset];
 				this.currentApplicationDataUnit.setFrameCounter(newTelegram.applicationData, 12 + offset, 16 + offset);
-
-				//this.currentApplicationDataUnit.encryptedPayload = newTelegram.applicationData.subarray(16 + offset);
-				//this.currentEncryptedPayloads.push(newTelegram.applicationData.subarray(16 + offset));
-			// } else {
-			// 	//this.currentApplicationDataUnit.encryptedPayload(...newTelegram.applicationData);
-			// 	this.currentApplicationDataUnits.push(newTelegram.applicationData);
 			}
 			this.currentApplicationDataUnits.push(newTelegram.applicationData);
 
@@ -79,18 +72,18 @@ export class MultiTelegramReader {
 			}
 
 			// last segment:
-
-			this.currentApplicationDataUnit.apduBuffer = Buffer.concat(this.currentApplicationDataUnits);
-			this.currentApplicationDataUnit.encryptedPayload = this.currentApplicationDataUnit.apduBuffer.subarray(16 + this.currentApplicationDataUnit.lengthFieldLength - 1)
+			this.currentApplicationDataUnit.apduRaw = Buffer.concat(this.currentApplicationDataUnits);
+			this.currentApplicationDataUnit.encryptedPayload = this.currentApplicationDataUnit.apduRaw.subarray(16 + this.currentApplicationDataUnit.lengthFieldLength - 1)
 
 			ApplicationDataDecrypter.Decrypt(this.currentApplicationDataUnit);
 
 			if (this.currentApplicationDataUnit.lengthEncryptedPayload != this.currentApplicationDataUnit.encryptedPayload.length) {
 				console.warn(`addTelegrams: Application data length of combined segments invalid. Start over. Expected: ${this.currentApplicationDataUnit.lengthEncryptedPayload}. Received: ${this.currentApplicationDataUnit.encryptedPayload.length}`);
-				console.log(JSON.stringify(this.currentApplicationDataUnit));
+				//console.log(JSON.stringify(this.currentApplicationDataUnit));
 				this.resetSearch();
 				continue;
 			}
+
 			// everything seems to be fine:
 			if(this.provisioning == ApplicationDataProvisioning.all) {
 				this.applicationDataUnits.push(this.currentApplicationDataUnit);
@@ -107,7 +100,6 @@ export class MultiTelegramReader {
 		this.applicationDataUnits = [];
 		return ret;
 	}
-
 
 	private resetSearch() {
 		this.currentSequenceNumber = 0;

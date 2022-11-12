@@ -1,0 +1,33 @@
+{
+	SerialPort: {
+		//port: '/dev/ttyUSB0'
+		port: "/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_DIDSt114J20-if00-port0",
+		baudRate: 2400,
+		dataBits: 8,			// 5 | 6 | 7 | 8
+		parity: 'none',			// 'none' | 'even' | 'odd' = 'none',
+		stopBits: 1				// 1 | 1.5 | 2 = 1,
+	},
+
+	Decryption: {
+		key: "decryption key from your service provider!",
+	},
+
+	Debug: {
+		// stop after this many if > 0
+		maxBytes: 0,
+		maxTelegrams: 0,
+		maxApplicationDataUnits: 2,     // APDU, application protocol data unit
+
+		logSerialPort: false,
+		logSerialPortMinBytes: 60,      // log only after this number of bytes in queue
+
+		logTelegramRaw: false,
+		logTelegramJson: false,
+
+		// log application protocol data units
+		logApduRaw: true,
+		logApduJson: true,
+		logApduDecryptedRaw: true,
+	}
+}
+
