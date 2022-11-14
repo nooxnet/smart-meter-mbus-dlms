@@ -57,7 +57,7 @@ export class MultiTelegramReader {
 
 				this.currentApplicationDataUnit.setSystemTitle(newTelegram.applicationData.subarray(2, 10));
 
-				// length filed has either 1 byte (length <= 127) or 3 bytes
+				// length field has either 1 byte (length <= 127) or 3 bytes
 				const lengthFieldLength = this.currentApplicationDataUnit.setLength(newTelegram.applicationData,10, 13);
 				const offset = lengthFieldLength - 1
 
