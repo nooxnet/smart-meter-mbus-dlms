@@ -1,5 +1,5 @@
 import { readFile, writeFile  } from 'node:fs/promises';
-import { DefinitionProcessor } from "./cosem-asn2ts-lib/definition-processor";
+import { TypeDefinitionProcessor } from "./cosem-asn2ts-lib/type-definition-processor";
 import { raw } from "config/raw";
 import { DefinitionProcessors } from "./cosem-asn2ts-lib/interfaces";
 
@@ -85,19 +85,29 @@ function splitDefinitions(data: string): void  {
 		const key = definitionStrings[i].trim();
 		const rawText = definitionStrings[i + 1].trim();
 		//console.log(`definitions ${key} ...`)
-		allDefinitionProcessorsRaw[key] = new DefinitionProcessor(key, rawText);
+		allDefinitionProcessorsRaw[key] = new TypeDefinitionProcessor(key, rawText);
 	}
 }
 
 async function generateTypeScriptCode(): Promise<void> {
 	const parts: string[] = [];
 	parts.push('import { BlockMode, Occurrence } from "../cosem-asn2ts/cosem-asn2ts-lib/enums";\n' +
-		'import { Definition } from "../cosem-lib/definition";\n' +
-		'import { Property } from "../cosem-lib/property";');
+		'import { TypeDefinition } from "../cosem-lib/type-definition";\n' +
+		'import { Property } from "../cosem-lib/property";\n' +
+		'import { Enumeration } from "../cosem-lib/enumeration";\n' +
+		'import { BitString } from "../cosem-lib/bit-string";'
+	);
+
+	const assignments: string[] = []
 	for(const key in definitionProcessors) {
 		const definition = definitionProcessors[key];
 		parts.push(definition.generateCode());
+		const assignmentParts = definition.generateAssignmentParts();
+		assignments.push(`['${assignmentParts[0]}', ${assignmentParts[1]}]`);
 	}
+
+	parts.push(`export const cosemTypeDefinitionMap = new Map<string, TypeDefinition>([\n\t${assignments.join(',\n\t')}\n]);`);
+
 	await writeFile(generatedCodeFile, parts.join('\n\n'), 'utf-8');
 }
 

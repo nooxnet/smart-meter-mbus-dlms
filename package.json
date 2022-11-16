@@ -15,7 +15,8 @@
 		"@types/node": "^18.11.9",
 		"@types/serialport": "^8.0.2",
 		"config": "^3.3.8",
-		"serialport": "^10.4.0"
+		"serialport": "^10.4.0",
+		"smartmeter-obis": "^3.0.2"
 	},
 	"devDependencies": {
 		"@babel/preset-env": "^7.20.2",

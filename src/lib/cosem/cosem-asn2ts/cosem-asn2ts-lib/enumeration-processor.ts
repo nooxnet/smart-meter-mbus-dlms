@@ -1,13 +1,18 @@
 
 import { Identifier } from "./identifier";
-import { DefinitionProcessor } from "./definition-processor";
+import { TypeDefinitionProcessor } from "./type-definition-processor";
+import { Occurrence } from "./enums";
 
 
 export class EnumerationProcessor {
 	public name: string = '';
 	public value: number = 0;
 
-	constructor(public definition: DefinitionProcessor, public rawText: string) {
+	constructor(public definition: TypeDefinitionProcessor, public rawText: string) {
+	}
+
+	public generateCode() {
+		return `new Enumeration('${this.name}', ${this.value})`;
 	}
 
 	public process() {

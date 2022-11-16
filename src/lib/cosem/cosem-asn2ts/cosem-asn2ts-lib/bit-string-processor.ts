@@ -1,10 +1,14 @@
-import { DefinitionProcessor } from "./definition-processor";
+import { TypeDefinitionProcessor } from "./type-definition-processor";
 
 export class BitStringProcessor  {
 	public name: string = '';
 	public bit: number = 0;
 
-	constructor(public definition: DefinitionProcessor, public rawText: string) {
+	constructor(public definition: TypeDefinitionProcessor, public rawText: string) {
+	}
+
+	public generateCode() {
+		return `new BitString('${this.name}', ${this.bit})`;
 	}
 
 	public process() {

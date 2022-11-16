@@ -1,10 +1,10 @@
-import { DefinitionProcessor } from "./definition-processor";
+import { TypeDefinitionProcessor } from "./type-definition-processor";
 import { PropertyProcessor } from "./property-processor";
 import { EnumerationProcessor } from "./enumeration-processor";
 import { BitStringProcessor } from "./bit-string-processor";
 
 export interface DefinitionProcessors {
-	[key: string]: DefinitionProcessor;
+	[key: string]: TypeDefinitionProcessor;
 }
 
 export interface TaggedPropertyProcessors {

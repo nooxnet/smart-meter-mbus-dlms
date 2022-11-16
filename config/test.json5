@@ -1,0 +1,4 @@
+// node-config issues an error when this file is not present when running jest tests.
+{
+
+}

@@ -1,6 +1,8 @@
 NPM installs:
 * npm i serialport 
 * npm i config
+* npm i smartmeter-obis
+
 
 NPM for Dev
 * npm i --save @types/serialport

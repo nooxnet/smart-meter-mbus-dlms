@@ -4,13 +4,14 @@ import { PropertyProcessor } from "./property-processor";
 import { Identifier } from "./identifier";
 import { EnumerationProcessor } from "./enumeration-processor";
 import { BitStringProcessor } from "./bit-string-processor";
+import { asn1DataTypes } from "./asn-1-data-types";
 
 export class RawContent {
 	single: string = '';
 	block: string[] = [];
 }
 
-export class DefinitionProcessor {
+export class TypeDefinitionProcessor {
 	public isProcessed = false;
 
 	public maxLevel: number = 0;
@@ -18,6 +19,9 @@ export class DefinitionProcessor {
 	public occurrence: Occurrence = Occurrence.none
 	public tag: number | undefined = undefined;
 	public customTag: string | undefined;
+	public customType: string = '';
+	public asn1Type: string = ''
+	public typeParameter: string = ''
 
 	public rawLevel1Content = new RawContent()
 
@@ -32,11 +36,17 @@ export class DefinitionProcessor {
 	constructor(public name: string, public rawText: string) {
 	}
 
+	private getSaveName(): string {
+		return this.name.replace(/\W+/g,"_");
+	}
 
 	public generateCode(): string {
-		const saveName = this.name.replace(/\W+/g,"_");
+		const saveName = this.getSaveName();
 		const tagString = this.tag !== undefined ? `\n\ttag: ${this.tag},` : '';
 		const customTagString = this.customTag ? `\n\tcustomTag: '${this.customTag}',` : '';
+		const customTypeString = this.customType ? `\n\tcustomType: '${this.customType}',` : '';
+		const asn1TypeString = this.asn1Type ? `\n\tasn1Type: '${this.asn1Type}',` : '';
+		const typeParameterString = this.typeParameter ? `\n\ttypeParameter: '${this.typeParameter}',` : '';
 
 		let propertyString = '';
 		if(this.propertyProcessors.length > 0) {
@@ -44,12 +54,38 @@ export class DefinitionProcessor {
 		${this.propertyProcessors.map(p => p.generateCode()).join(',\n\t\t')}
 	],`
 		}
-		return `
-const ${saveName} = new Definition({
+
+		let enumerationString: string = '';
+		const enumerationStringArray: string[] = []
+		for(const key in this.enumerationProcessors) {
+			enumerationStringArray.push(this.enumerationProcessors[key].generateCode());
+		}
+		if(enumerationStringArray.length > 0) {
+			enumerationString = `\n\tenumerations: [
+		${enumerationStringArray.join(',\n\t\t')}
+	],`
+		}
+
+		let bitStringString: string = '';
+		const bitStringStringArray: string[] = []
+		for(const key in this.bitStringProcessors) {
+			bitStringStringArray.push(this.bitStringProcessors[key].generateCode());
+		}
+		if(bitStringStringArray.length > 0) {
+			bitStringString = `\n\tbitStrings: [
+		${bitStringStringArray.join(',\n\t\t')}
+	],`
+		}
+
+		return `const ${saveName} = new TypeDefinition({
 	name: '${this.name}', 
 	blockMode: BlockMode.${BlockMode[this.blockMode]},
-	occurrence: Occurrence.${Occurrence[this.occurrence]}, ${tagString}${customTagString}${propertyString}
+	occurrence: Occurrence.${Occurrence[this.occurrence]}, ${tagString}${customTagString}${customTypeString}${asn1TypeString}${typeParameterString}${propertyString}${enumerationString}${bitStringString}
 });`;
+	}
+
+	public generateAssignmentParts(): string[] {
+		return [this.name, this.getSaveName()];
 	}
 
 	public process(): string[] {
@@ -103,14 +139,17 @@ const ${saveName} = new Definition({
 
 	private setAttributes(rawText: string): void {
 
+
+		let text = rawText;
+
 		// check for tag:
-		if(rawText[0] == '[') {
-			const endBracketIndex = rawText.indexOf(']', 1);
+		if(text[0] == '[') {
+			const endBracketIndex = text.indexOf(']', 1);
 			if(endBracketIndex < 0) {
 				console.error(`Definition.setAttributes: property ${this.name} starts with "[" but does not seem to be a tag. rawText: ${rawText}`);
 				process.exit(1);
 			}
-			const tagText = rawText.substring(0, endBracketIndex + 1);
+			const tagText = text.substring(0, endBracketIndex + 1);
 			const matches = tagText.match(/^\[(([A-Z]+)\s+)*(\d{1,3})]$/);
 			if(!matches || matches.length != 4) {
 				console.error(`Definition.setAttributes: identifier ${tagText} of property ${this.name} starts with "[" and ends with "]" but does not seem to be a tag. rawText: ${rawText}`);
@@ -118,29 +157,58 @@ const ${saveName} = new Definition({
 			}
 			this.customTag = matches[2];
 			this.tag = +matches[3];
+			text = text.substring(matches[0].length).trim();
 		}
+
+		if(text.indexOf(Identifier.implicit) == 0) {
+			this.occurrence = Occurrence.implicit
+			text = text.substring(Identifier.implicit.length).trim();
+		} else if(rawText.indexOf(Identifier.explicit) > 0) {
+			this.occurrence = Occurrence.explicit
+			text = text.substring(Identifier.explicit.length).trim();
+		}
+
 
 		if(this.maxLevel == 0) {
 			this.blockMode = BlockMode.single;
-		} else {
-			if(!rawText) {
-				this.blockMode = BlockMode.none;
-			}
-			if(rawText.indexOf(Identifier.sequence) >= 0) {
-				this.blockMode = BlockMode.sequence;
-			} else if(rawText.indexOf(Identifier.choice) >= 0) {
-				this.blockMode = BlockMode.choice;
-			} else if(rawText.indexOf(Identifier.enumerated) >= 0) {
-				this.blockMode = BlockMode.enumerated;
-			} else if(rawText.indexOf(Identifier.bitString) >= 0) {
-				this.blockMode = BlockMode.bitString;
-			}
-		}
+			// check from asn1 data type::
 
-		if(rawText.indexOf(Identifier.implicit) > 0) {
-			this.occurrence = Occurrence.implicit
-		} else if(rawText.indexOf(Identifier.explicit) > 0) {
-			this.occurrence = Occurrence.explicit
+			const dataType = text;
+			for(let [asn1DataTypeName, asn1DataType] of asn1DataTypes) {
+				const foundIndex = dataType.indexOf(asn1DataTypeName)
+				if(foundIndex != 0) {
+					continue;
+				}
+				this.asn1Type = asn1DataTypeName;
+				this.typeParameter = dataType.substring(asn1DataTypeName.length).trim();
+				// if(asn1DataType.hasSubType()) {
+				// 	this.subType = this.typeParameter;
+				// 	this.typeParameter = '';
+				// }
+			}
+			if(!this.asn1Type) {
+				this.customType = dataType;
+			}
+
+		} else {
+			if(!text) {
+				this.blockMode = BlockMode.none;
+				console.error(`Definition.setAttributes(): Invalid single definition '${this.name}'. Child elements but no type defined (BlockMode.none).`);
+				process.exit(0);
+			}
+			if(text.indexOf(Identifier.sequence) == 0) {
+				this.blockMode = BlockMode.sequence;
+				text = text.substring(Identifier.sequence.length).trim();
+			} else if(text.indexOf(Identifier.choice) == 0) {
+				this.blockMode = BlockMode.choice;
+				text = text.substring(Identifier.choice.length).trim();
+			} else if(text.indexOf(Identifier.enumerated) == 0) {
+				this.blockMode = BlockMode.enumerated;
+				text = text.substring(Identifier.enumerated.length).trim();
+			} else if(text.indexOf(Identifier.bitString) == 0) {
+				this.blockMode = BlockMode.bitString;
+				text = text.substring(Identifier.bitString.length).trim();
+			}
 		}
 
 

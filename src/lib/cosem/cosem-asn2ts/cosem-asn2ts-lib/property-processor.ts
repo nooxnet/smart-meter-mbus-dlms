@@ -1,7 +1,7 @@
-import { Occurrence } from "./enums";
+import { BlockMode, Occurrence } from "./enums";
 import { asn1DataTypes } from "./asn-1-data-types";
 import { Identifier } from "./identifier";
-import { DefinitionProcessor } from "./definition-processor";
+import { TypeDefinitionProcessor } from "./type-definition-processor";
 
 
 export class PropertyProcessor {
@@ -14,11 +14,21 @@ export class PropertyProcessor {
 	public typeParameter: string = '';
 	public isOptional: boolean = false;
 
-	constructor(public definition: DefinitionProcessor, public rawText: string) {
+	constructor(public definition: TypeDefinitionProcessor, public rawText: string) {
 	}
 
 	public generateCode() {
-		return 'new Property({})';
+		const nameString = `name: '${this.name}', `;
+		const tagString = this.tag !== undefined ? `tag: ${this.tag}, ` : '';
+		//const customTagString = this.customTag ? `customTag: '${this.customTag}',` : '';
+		const occurrenceString = `occurrence: Occurrence.${Occurrence[this.occurrence]}, `
+		const customTypeString = this.customType ? `customType: '${this.customType}', ` : '';
+		const asn1TypeString = this.asn1Type ? `asn1Type: '${this.asn1Type}', ` : '';
+		const subTypeString = this.subType ? `subType: '${this.subType}', ` : '';
+		const typeParameterString = this.typeParameter ? `typeParameter: '${this.typeParameter}', ` : '';
+		const isOptionalString = this.isOptional ? `isOptional: true, ` : '';
+
+		return `new Property({${nameString}${tagString}${occurrenceString}${customTypeString}${asn1TypeString}${subTypeString}${typeParameterString}${isOptionalString}})`;
 	}
 
 	public process() {
@@ -83,14 +93,13 @@ export class PropertyProcessor {
 		}
 
 		const dataType = parts.slice(currentIndex, endIndex).join(' ');
-		for(let asn1DataTypeName of Object.keys(asn1DataTypes)) {
+		for(let [asn1DataTypeName, asn1DataType] of asn1DataTypes) {
 			const foundIndex = dataType.indexOf(asn1DataTypeName)
 			if(foundIndex != 0) {
 				continue;
 			}
 			this.asn1Type = asn1DataTypeName;
 			this.typeParameter = dataType.substring(asn1DataTypeName.length).trim();
-			const asn1DataType = asn1DataTypes[asn1DataTypeName];
 			if(asn1DataType.hasSubType()) {
 				this.subType = this.typeParameter;
 				this.typeParameter = '';

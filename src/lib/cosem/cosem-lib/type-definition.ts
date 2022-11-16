@@ -4,12 +4,15 @@ import { Property } from "./property";
 import { Enumeration } from "./enumeration";
 import { BitStrings, Enumerations, TaggedProperties } from "./interfaces";
 
-export interface IDefinition {
+export interface ITypeDefinition {
 	name: string;
 	blockMode: BlockMode;
 	occurrence: Occurrence;
 	tag: number | undefined;
 	customTag: string;
+	customType: string;
+	asn1Type: string;
+	typeParameter: string;
 
 	properties: Property[];
 	enumerations: Enumeration[];
@@ -17,12 +20,15 @@ export interface IDefinition {
 }
 
 
-export class Definition {
+export class TypeDefinition {
 	public name: string;
 	public blockMode: BlockMode;
 	public occurrence: Occurrence;
 	public tag: number | undefined;
 	public customTag: string | undefined;
+	public customType: string | undefined
+	public asn1Type: string | undefined;
+	public typeParameter: string | undefined;
 
 	public properties: Property[]
 	public taggedProperties: TaggedProperties = {};
@@ -30,12 +36,16 @@ export class Definition {
 	public enumerations: Enumerations = {};
 	public bitStrings: BitStrings = {};
 	
-	public constructor(init: Partial<IDefinition>) {
+	public constructor(init: Partial<ITypeDefinition>) {
 		this.name = init.name ?? '';
 		this.blockMode = init.blockMode ?? BlockMode.none;
 		this.occurrence = init.occurrence ?? Occurrence.none;
 		this.tag = init.tag;
 		this.customTag = init.customTag;
+		this.customType = init.customType;
+		this.asn1Type = init.asn1Type;
+		this.typeParameter = init.typeParameter;
+
 		this.properties = init.properties ?? [];
 		for(let property of this.properties) {
 			if(property.tag != undefined) {
