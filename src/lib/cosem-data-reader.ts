@@ -43,7 +43,7 @@ export class CosemDataReader {
 		this.currentIndex += result?.encodingLength;
 
 		if(result?.asn1ResultType == Asn1ResultType.subType) {
-			for(let i = 0; i < result.count; i++) {
+			for(let i = 0; i < (result?.count ?? 0); i++) {
 				const subResult = this.readTypeDefinition(result.subType ?? '', undefined, parentOccurrence, ancestorOccurrence);
 				result.addSubResult(subResult);
 			}
