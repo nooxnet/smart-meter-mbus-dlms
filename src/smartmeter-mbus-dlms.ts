@@ -84,7 +84,7 @@ function logSerialPortData(serialPortData: Buffer): void {
 
 function logTelegrams(telegrams: Telegram[]): void {
 	if(DebugSettings.logTelegramRaw){
-		telegrams.forEach((t) => console.log('Telegram: ', t.telegramRaw.toString('hex')));
+		telegrams.forEach((t) => console.log('Telegram: ', t.telegramRaw?.toString('hex')));
 	}
 	if(DebugSettings.logTelegramJson) {
 		telegrams.forEach((t) => console.log('Telegram: ', t));

@@ -1,10 +1,12 @@
 import { ObisMeasurement, ObisNames } from 'smartmeter-obis';
-import { DateTime, Result } from "./cosem/cosem-asn2ts/cosem-asn2ts-lib/asn-1-data-types";
+import { DateTime, Result } from "./cosem/cosem-lib/asn-1-data-types";
 import { DataNotification, LongInvokeIdAndPriority, NotificationBody } from "./result-interfaces";
 
 export class CosemObisDataProcessor {
+	// The data-value part of the COSEM PDU ASN.1 specification is very flexible.
+	// So this part is pretty much hard coded to extract the actual data from
+	// the decoded result as delivered by the smart meter
 
-	// pretty much hard coded to extract the actual data from the result based on the COSEM PDU ASN.1 specification.
 
 	private areResultNamesOk(result: Result, propertyName: string | undefined, typeName: string | undefined): boolean {
 		if(propertyName && result?.propertyName != propertyName) {

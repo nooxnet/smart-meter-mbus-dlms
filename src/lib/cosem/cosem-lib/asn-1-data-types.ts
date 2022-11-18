@@ -1,4 +1,4 @@
-import { Occurrence } from "./enums";
+import { Occurrence } from "../cosem-asn2ts/cosem-asn2ts-lib/enums";
 
 export enum Asn1LengthType {
 	fixed,
@@ -38,8 +38,6 @@ export interface ClockStatus {
 	daylightSavingActive: boolean;
 }
 
-
-
 export interface IResult {
 	propertyName: string | undefined;
 	typeName: string;
@@ -49,7 +47,7 @@ export interface IResult {
 	rawValue: Buffer;
 	hexString: string;
 	asn1ResultType: Asn1ResultType;
-	cosemResultType: CosemResultType;
+	//cosemResultType: CosemResultType;
 	numberValue: number;
 	stringValue: string;
 	dateTimeValue: DateTime;
@@ -66,7 +64,7 @@ export class Result {
 	public rawValue: Buffer | undefined;
 	public hexString: string = '';
 	public asn1ResultType: Asn1ResultType | undefined;
-	public cosemResultType: CosemResultType | undefined;
+	//public cosemResultType: CosemResultType | undefined;
 	public numberValue: number | undefined;
 	public stringValue: string | undefined;
 	public dateTimeValue: DateTime | undefined;
@@ -83,7 +81,7 @@ export class Result {
 		if(init.rawValue != undefined) this.rawValue = init.rawValue
 		if(init.hexString != undefined) this.hexString = init.hexString
 		if(init.asn1ResultType != undefined) this.asn1ResultType = init.asn1ResultType
-		if(init.cosemResultType != undefined) this.cosemResultType = init.cosemResultType
+		//if(init.cosemResultType != undefined) this.cosemResultType = init.cosemResultType
 		if(init.numberValue != undefined) this.numberValue = init.numberValue
 		if(init.stringValue != undefined) this.stringValue = init.stringValue
 		if(init.dateTimeValue != undefined) this.dateTimeValue = init.dateTimeValue
@@ -103,6 +101,8 @@ export class Result {
 	}
 }
 
+export type EnrichDataFunction = ((result: Partial<IResult>) => void) | undefined
+
 
 export class Asn1DataType {
 
@@ -117,22 +117,14 @@ export class Asn1DataType {
 		return false
 	}
 
-	// public getLength(): number | undefined {
-	// 	console.error(`${typeof this} getLength() not implemented`);
-	// 	return undefined;
-	// }
-
-	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		console.error(`${this.constructor.name}.getLengthAndValueFromData() not implemented for ${name}`);
 		return undefined;
 	}
 
-
-
 	protected static getOccurrence(parentOccurrence: Occurrence, ancestorOccurrence: Occurrence) {
 		return parentOccurrence != Occurrence.none ? parentOccurrence : ancestorOccurrence;
 	}
-
 
 	protected getDateTime(rawValue: Buffer, validYearFrom?: number, validYearTo?: number, validYearDeviation?: number): DateTime | undefined {
 		// DLMS/COSEM/OBIS Blue Book 4.1.6.1 Date formats
@@ -214,7 +206,7 @@ export class Asn1Integer extends Asn1DataType {
 		return Asn1LengthType.parameter;
 	}
 
-	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		parentOccurrence =  Asn1DataType.getOccurrence(parentOccurrence, ancestorOccurrence);
 		if(parentOccurrence != Occurrence.implicit) {
 			console.error('Asn1Integer.getLengthAndValue: IMPLICIT only implemented.')
@@ -271,7 +263,7 @@ export class Asn1Integer extends Asn1DataType {
 					return undefined;
 			}
 		}
-		return new Result({
+		const resultPartial: Partial<IResult> = {
 			propertyName,
 			typeName: this.typeName,
 			dataLength: length,
@@ -280,7 +272,11 @@ export class Asn1Integer extends Asn1DataType {
 			hexString: rawValue.toString('hex'),
 			asn1ResultType: Asn1ResultType.typeNumber,
 			numberValue,
-		});
+		};
+		if(enrichData) {
+			enrichData(resultPartial);
+		}
+		return new Result(resultPartial);
 	}
 }
 
@@ -295,7 +291,7 @@ export class Asn1OctetString extends Asn1DataType {
 		return Asn1LengthType.data;
 	}
 
-	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		parentOccurrence = Asn1DataType.getOccurrence(parentOccurrence, ancestorOccurrence);
 		if (parentOccurrence != Occurrence.implicit) {
 			console.error('Asn1OctetString.getLengthAndValue: IMPLICIT only implemented.')
@@ -308,6 +304,9 @@ export class Asn1OctetString extends Asn1DataType {
 			return undefined;
 		}
 		const rawValue = rawData.subarray(index + 1, index + 1 + length);
+		if(enrichData) {
+			console.warn('Asn1OctetString.getLengthAndValue: enrichData not implemented');
+		}
 		return new Result({
 			propertyName,
 			typeName: this.typeName,
@@ -386,7 +385,7 @@ export class Asn1SequenceOf extends Asn1DataType {
 		return true
 	}
 
-	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		parentOccurrence = Asn1DataType.getOccurrence(parentOccurrence, ancestorOccurrence);
 		if (parentOccurrence != Occurrence.implicit) {
 			console.error('Asn1SequenceOf.getLengthAndValue: IMPLICIT only implemented.')
@@ -399,6 +398,9 @@ export class Asn1SequenceOf extends Asn1DataType {
 			return undefined;
 		}
 		const rawValue = rawData.subarray(index, index + 1); // only length
+		if(enrichData) {
+			console.warn('Asn1OctetString.getLengthAndValue: enrichData not valid here');
+		}
 		return new Result({
 			propertyName,
 			typeName: this.typeName,

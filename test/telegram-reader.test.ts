@@ -10,7 +10,6 @@ describe('TelegramReader basic', () => {
 		telegramReader = new TelegramReader();
 	});
 
-
 	test('single random byte', () => {
 		expect(telegramReader.addRawData(Buffer.from([123]))).toBe(TelegramState.pending);
 		expect(telegramReader["receiveBuffer"].asNumberArray()).toStrictEqual([]);
@@ -70,7 +69,7 @@ describe('Telegram reader other example data', () => {
 		expect(telegramReader["telegrams"][0].controlInformationField).toBe(0x00);
 		expect(telegramReader["telegrams"][0].sequenceNumber).toBe(0);
 		expect(telegramReader["telegrams"][0].isLastSegment).toBeFalsy();
-		expect(telegramReader["telegrams"][0].lengthApplicationData).toBe(telegramReader["telegrams"][0].applicationData.length);
+		expect(telegramReader["telegrams"][0].lengthApplicationData).toBe(telegramReader["telegrams"][0].applicationData?.length);
 		expect(telegramReader["receiveBuffer"].asNumberArray()).toStrictEqual([]);
 		expect(telegramReader["receiveBuffer"].length).toBe(0);
 		expect(telegramReader["possibleStartFound"]).toBeFalsy();
@@ -87,7 +86,7 @@ describe('Telegram reader other example data', () => {
 		expect(telegramReader["telegrams"][0].controlInformationField).toBe(0x11);
 		expect(telegramReader["telegrams"][0].sequenceNumber).toBe(1);
 		expect(telegramReader["telegrams"][0].isLastSegment).toBeTruthy();
-		expect(telegramReader["telegrams"][0].lengthApplicationData).toBe(telegramReader["telegrams"][0].applicationData.length);
+		expect(telegramReader["telegrams"][0].lengthApplicationData).toBe(telegramReader["telegrams"][0].applicationData?.length);
 		expect(telegramReader["receiveBuffer"].asNumberArray()).toStrictEqual([]);
 		expect((telegramReader["receiveBuffer"]).length).toBe(0);
 		expect(telegramReader["possibleStartFound"]).toBeFalsy();
@@ -104,7 +103,7 @@ describe('Telegram reader other example data', () => {
 		expect(telegramReader["telegrams"][0].controlInformationField).toBe(0x10);
 		expect(telegramReader["telegrams"][0].sequenceNumber).toBe(0);
 		expect(telegramReader["telegrams"][0].isLastSegment).toBeTruthy();
-		expect(telegramReader["telegrams"][0].lengthApplicationData).toBe(telegramReader["telegrams"][0].applicationData.length);
+		expect(telegramReader["telegrams"][0].lengthApplicationData).toBe(telegramReader["telegrams"][0].applicationData?.length);
 		expect(telegramReader["receiveBuffer"].asNumberArray()).toStrictEqual([]);
 		expect((telegramReader["receiveBuffer"]).length).toBe(0);
 		expect(telegramReader["possibleStartFound"]).toBeFalsy();
@@ -199,7 +198,7 @@ describe('TelegramReader complete data package', () => {
 		expect(telegramReader["telegrams"][0].controlInformationField).toBe(0x11);
 		expect(telegramReader["telegrams"][0].sequenceNumber).toBe(1);
 		expect(telegramReader["telegrams"][0].isLastSegment).toBeTruthy();
-		expect(telegramReader["telegrams"][0].lengthApplicationData).toBe(telegramReader["telegrams"][0].applicationData.length);
+		expect(telegramReader["telegrams"][0].lengthApplicationData).toBe(telegramReader["telegrams"][0].applicationData?.length);
 		expect(telegramReader["receiveBuffer"].asNumberArray()).toStrictEqual([]);
 		expect((telegramReader["receiveBuffer"]).length).toBe(0);
 		expect(telegramReader["possibleStartFound"]).toBeFalsy();
@@ -243,7 +242,7 @@ describe('TelegramReader complete data package with prefix data', () => {
 	test('getTelegrams', () => {
 		const telegrams = telegramReader.getTelegrams();
 		expect(telegrams.length).toBe(1);
-		expect(telegrams[0].lengthApplicationData).toBe(telegrams[0].applicationData.length);
+		expect(telegrams[0].lengthApplicationData).toBe(telegrams[0].applicationData?.length);
 	});
 
 });
@@ -271,6 +270,6 @@ describe('TelegramReader complete data package second frame', () => {
 		expect(telegrams[0].lengthData).toBe(114);
 		expect(telegrams[0].isLastSegment).toBeTruthy();
 		expect(telegrams[0].sequenceNumber).toBe(1);
-		expect(telegrams[0].lengthApplicationData).toBe(telegrams[0].applicationData.length);
+		expect(telegrams[0].lengthApplicationData).toBe(telegrams[0].applicationData?.length);
 	});
 });

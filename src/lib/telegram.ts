@@ -61,8 +61,8 @@ export class Telegram {
 	// application layer
 	// APDU (application protocol data unit)
 	// may be incomplete if split up into multiple segments in multiple telegrams
-	public applicationData: Buffer;
+	public applicationData: Buffer | undefined;
 
 	// raw telegram data
-	public telegramRaw: Buffer;
+	public telegramRaw: Buffer | undefined;
 }

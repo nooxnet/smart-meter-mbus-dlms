@@ -1,7 +1,8 @@
 import { TypeDefinition } from "./cosem/cosem-lib/type-definition";
 import { BlockMode, Occurrence } from "./cosem/cosem-asn2ts/cosem-asn2ts-lib/enums";
 import { Property } from "./cosem/cosem-lib/property";
-import { Result, Asn1ResultType, asn1DataTypes } from "./cosem/cosem-asn2ts/cosem-asn2ts-lib/asn-1-data-types";
+import { Result, Asn1ResultType, asn1DataTypes, EnrichDataFunction, IResult } from "./cosem/cosem-lib/asn-1-data-types";
+import { cosemEnumUnitMap } from "./cosem/cosem-lib/cosem-enum-units";
 
 export class CosemDataReader {
 
@@ -15,21 +16,37 @@ export class CosemDataReader {
 		this.rawData = rawData
 		this.currentIndex = 0;
 
-		const result = this.readTypeDefinition(this.startTypeDefinitionName, undefined, Occurrence.explicit, Occurrence.explicit);
+		const result = this.readTypeDefinition(this.startTypeDefinitionName, undefined, Occurrence.explicit, Occurrence.explicit, undefined);
 		console.log(result);
 
 		return result;
 	}
 
-	private readProperty(definition: TypeDefinition, property: Property, parentOccurrence: Occurrence): Result | undefined {
-		const result = this.getTypeValue(definition, property, parentOccurrence);
+	private readProperty(definition: TypeDefinition, property: Property, parentOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
+		if(property.name == 'enum') {
+			enrichData = (partialResult: Partial<IResult>) => this.enrichDataWithCosemEnumUnits(partialResult);
+		}
+		const result = this.getTypeValue(definition, property, parentOccurrence, enrichData);
 		//console.log('CosemDataReader.readProperty:', result);
 		//if(!result) return;
 		return result;
 	}
 
+	private enrichDataWithCosemEnumUnits(partialResult: Partial<IResult>): void {
+		// In some cases the property names provide hints to the meaning of the data
+		// But the actual data is often defined in nested descendants (ASN.1 data types).
+		// And when these classes read the data they don't know anything about the property
+		// So I inject this method.
+		if (partialResult.typeName != 'INTEGER') return;
+		if (partialResult.numberValue == undefined) return;
 
-	private readAsn1TypeValue(definition: TypeDefinition, property: Property | undefined, asn1TypeName: string, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+		const cosemEnumUnit = cosemEnumUnitMap.get(partialResult.numberValue);
+		if(!cosemEnumUnit) return;
+		partialResult.stringValue = cosemEnumUnit.unit;
+	}
+
+
+	private readAsn1TypeValue(definition: TypeDefinition, property: Property | undefined, asn1TypeName: string, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		const asn1Type = asn1DataTypes.get(asn1TypeName)
 		if(!asn1Type) {
 			console.error(`CosemDataReader.readAsn1Type: definition ${definition.name}, property: ${property?.name}: Asn.1 Type not found: ${asn1TypeName}`);
@@ -37,14 +54,14 @@ export class CosemDataReader {
 		}
 		const propertyName = property?.name;
 
-		const result = asn1Type.getLengthAndValue(propertyName, this.rawData, this.currentIndex, subType, typeParameter, parentOccurrence, ancestorOccurrence);
+		const result = asn1Type.getLengthAndValue(propertyName, this.rawData, this.currentIndex, subType, typeParameter, parentOccurrence, ancestorOccurrence, enrichData);
 		if(!result) return;
 
 		this.currentIndex += result?.encodingLength;
 
 		if(result?.asn1ResultType == Asn1ResultType.subType) {
 			for(let i = 0; i < (result?.count ?? 0); i++) {
-				const subResult = this.readTypeDefinition(result.subType ?? '', undefined, parentOccurrence, ancestorOccurrence);
+				const subResult = this.readTypeDefinition(result.subType ?? '', undefined, parentOccurrence, ancestorOccurrence, undefined);
 				result.addSubResult(subResult);
 			}
 		}
@@ -52,7 +69,7 @@ export class CosemDataReader {
 	}
 
 
-	private getTypeValue(definition: TypeDefinition, property: Property | undefined, parentOccurrence: Occurrence): Result | undefined {
+	private getTypeValue(definition: TypeDefinition, property: Property | undefined, parentOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		let customTypeName: string | undefined;
 		let asn1TypeName: string | undefined;
 		let occurrence: Occurrence;
@@ -75,16 +92,16 @@ export class CosemDataReader {
 		}
 
 		if(customTypeName) {
-			return this.readTypeDefinition(customTypeName, parentProperty, occurrence, parentOccurrence);
+			return this.readTypeDefinition(customTypeName, parentProperty, occurrence, parentOccurrence, enrichData);
 		} else if(asn1TypeName) {
-			return this.readAsn1TypeValue(definition, property, asn1TypeName, subType, typeParameter, occurrence, parentOccurrence);
+			return this.readAsn1TypeValue(definition, property, asn1TypeName, subType, typeParameter, occurrence, parentOccurrence, enrichData);
 		}
 
 		console.error(`CosemDataReader.checkForType: definition ${definition.name}, property: ${property?.name}: Not implemented`, definition, property);
 		return;
 	}
 
-	private readTypeDefinition(definitionName: string, parentProperty: Property | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	private readTypeDefinition(definitionName: string, parentProperty: Property | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		if(parentOccurrence == Occurrence.none) parentOccurrence = ancestorOccurrence;
 		const typeDefinition = this.cosemTypeDefinitionMap.get(definitionName);
 		if(!typeDefinition) {
@@ -100,7 +117,7 @@ export class CosemDataReader {
 
 		switch(typeDefinition.blockMode) {
 			case BlockMode.single:
-				const getTypeValueResult = this.getTypeValue(typeDefinition, undefined, parentOccurrence);
+				const getTypeValueResult = this.getTypeValue(typeDefinition, undefined, parentOccurrence, enrichData);
 				result.addSubResult(getTypeValueResult);
 				// if(!typeDefinition.asn1Type) {
 				// 	result.addSubResult(getTypeValueResult);
@@ -117,12 +134,15 @@ export class CosemDataReader {
 					return;
 				}
 				this.currentIndex++;
-				const propertyResult = this.readProperty(typeDefinition, property, parentOccurrence);
+				const propertyResult = this.readProperty(typeDefinition, property, parentOccurrence, enrichData);
 				result.addSubResult(propertyResult);
 				return result;
 			case BlockMode.sequence:
+				if(enrichData) {
+					console.warn(`CosemDataReader.definitionReader enrichData function set. Should not occur if multiple child properties exists.`);
+				}
 				for(const property of typeDefinition.properties) {
-					result.addSubResult(this.readProperty(typeDefinition, property, parentOccurrence));
+					result.addSubResult(this.readProperty(typeDefinition, property, parentOccurrence, undefined));
 				}
 				return result;
 			default:

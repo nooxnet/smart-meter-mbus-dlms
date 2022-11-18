@@ -4,7 +4,7 @@ import { PropertyProcessor } from "./property-processor";
 import { Identifier } from "./identifier";
 import { EnumerationProcessor } from "./enumeration-processor";
 import { BitStringProcessor } from "./bit-string-processor";
-import { asn1DataTypes } from "./asn-1-data-types";
+import { asn1DataTypes } from "../../cosem-lib/asn-1-data-types";
 
 export class RawContent {
 	single: string = '';

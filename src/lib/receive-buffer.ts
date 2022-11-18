@@ -1,5 +1,8 @@
 export class ReceiveBuffer {
-
+	// Usually we get < 400 bytes per message,
+	// so we use a small buffer to reduce memory footprint.
+	// But if something went wrong (lag) we switch to a bigger buffer.
+	// If the received data is still too big we throw that away and start over.
 	public buffer: Buffer;
 	private _length: number = 0;
 	public get length(): number {
@@ -50,6 +53,7 @@ export class ReceiveBuffer {
 	public asNumberArray(): number[] {
 		//return [...this.buffer.subarray(0, this._length)];
 		// stupid JS/Node: toJSON is 10 times faster.
+		// code similar to toJson:
 
 		const result: number[] = new Array(this._length);
 		for(let i = 0; i < this._length; i++) {

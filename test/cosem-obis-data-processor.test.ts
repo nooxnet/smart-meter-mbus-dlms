@@ -1,7 +1,7 @@
 import { CosemDataReader } from "../src/lib/cosem-data-reader";
 import { cosemTypeDefinitionMap } from "../src/lib/cosem/generated/asn1-structure";
 import { CosemObisDataProcessor } from "../src/lib/cosem-obis-data-processor";
-import { Result } from "../src/lib/cosem/cosem-asn2ts/cosem-asn2ts-lib/asn-1-data-types";
+import { Result } from "../src/lib/cosem/cosem-lib/asn-1-data-types";
 import { read } from "fs";
 
 

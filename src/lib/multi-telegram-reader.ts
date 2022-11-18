@@ -6,7 +6,7 @@ import { ApplicationDataDecrypter } from "./application-data-decrypter";
 
 // transport layer - reads APDUs (application protocol data unit) from one or more TPDU (transport protocol data unit)
 export class MultiTelegramReader {
-	// either use addRawData or addTelegrams - not both
+	// either use addRawData() or addTelegrams() - not both
 
 	private static readonly cypheringServiceGeneralGloCiphering = 0xDB;
 
@@ -16,7 +16,7 @@ export class MultiTelegramReader {
 
 	private currentSequenceNumber = 0;
 
-	// telegramReader would not be needed if addTelegram() is not used, but then it has to be defined in the calling code anyway
+	// telegramReader would not be needed if addTelegram() is not used, but it has to be defined in the calling code anyway
 	constructor(private telegramReader: TelegramReader, private provisioning: ApplicationDataProvisioning = ApplicationDataProvisioning.all) {
 	}
 
@@ -37,6 +37,12 @@ export class MultiTelegramReader {
 		for (let newTelegram of newTelegrams) {
 			if (newTelegram.sequenceNumber != this.currentSequenceNumber) {
 				console.log(`addTelegrams: Sequence number does not match. Start over. Expected: ${this.currentSequenceNumber}. Received: ${newTelegram.sequenceNumber}`);
+				this.resetSearch();
+				continue;
+			}
+
+			if(!newTelegram.applicationData) {
+				console.warn(`addTelegrams: Application data not set.`);
 				this.resetSearch();
 				continue;
 			}

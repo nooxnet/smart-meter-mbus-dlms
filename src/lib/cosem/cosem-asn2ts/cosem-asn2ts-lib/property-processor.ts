@@ -1,5 +1,5 @@
 import { BlockMode, Occurrence } from "./enums";
-import { asn1DataTypes } from "./asn-1-data-types";
+import { asn1DataTypes } from "../../cosem-lib/asn-1-data-types";
 import { Identifier } from "./identifier";
 import { TypeDefinitionProcessor } from "./type-definition-processor";
 

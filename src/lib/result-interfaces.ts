@@ -1,4 +1,4 @@
-import { DateTime } from "./cosem/cosem-asn2ts/cosem-asn2ts-lib/asn-1-data-types";
+import { DateTime } from "./cosem/cosem-lib/asn-1-data-types";
 
 export interface DataNotification {
 	longInvokeIdAndPriority: LongInvokeIdAndPriority;

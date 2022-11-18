@@ -1,6 +1,5 @@
 import { readFile, writeFile  } from 'node:fs/promises';
 import { TypeDefinitionProcessor } from "./cosem-asn2ts-lib/type-definition-processor";
-import { raw } from "config/raw";
 import { DefinitionProcessors } from "./cosem-asn2ts-lib/interfaces";
 
 const cosemAsnFile = './COSEMpdu_GB83.asn';

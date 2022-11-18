@@ -1,4 +1,4 @@
-import { Result } from "./cosem/cosem-asn2ts/cosem-asn2ts-lib/asn-1-data-types";
+import { Result } from "./cosem/cosem-lib/asn-1-data-types";
 
 interface SimpleXmlAttribute {
 	name: string,
@@ -6,7 +6,6 @@ interface SimpleXmlAttribute {
 }
 
 class SimpleXmlNode {
-
 	public children: SimpleXmlNode[] = [];
 
 	constructor (
@@ -18,18 +17,6 @@ class SimpleXmlNode {
 			this.children = children
 		}
 	}
-
-	// public addAttribute(attribute: SimpleXmlAttribute) {
-	// 	this.attributes.push(attribute);
-	// }
-
-
-	// public getOpenElement(): string {
-	// 	const indent = '\t'.repeat(this.level);
-	// 	attributeString =
-	// 	return `< ${name}`
-	// }
-
 }
 
 interface AnalysisResult {
@@ -82,22 +69,23 @@ export class SimpleXmlProcessor {
 	}
 
 	private xmlTagNameEncoding(tagName: string): string {
-		// must not start with a digit, but property name of asn.1 specification does not do that
+		// must not start with a digit, but property names of asn.1 specification do not do that
 		return tagName
 			.replace(/[^a-zA-Z0-9\-_]/, '_')
 			.split('-').map(w => w[0].toUpperCase() + w.slice(1))
 			.join('');
 	}
 
-
 	private analyzeTypeDefinition(result: Result): AnalysisResult {
-
 		if(result.results.length == 0) {
 			let comment: string | undefined;
 			if(result.dateTimeValue) {
 				comment = result.dateTimeValue.asString;
 			} else if(result.numberValue != undefined) {
 				comment = result.numberValue.toString();
+				if(result.stringValue) {
+					comment += `, ${result.stringValue}`
+				}
 			} else {
 				comment = result.stringValue;
 			}
