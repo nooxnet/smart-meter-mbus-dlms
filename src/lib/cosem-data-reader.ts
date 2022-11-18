@@ -15,7 +15,7 @@ export class CosemDataReader {
 		this.rawData = rawData
 		this.currentIndex = 0;
 
-		const result = this.readTypeDefinition(this.startTypeDefinitionName, Occurrence.explicit, Occurrence.explicit);
+		const result = this.readTypeDefinition(this.startTypeDefinitionName, undefined, Occurrence.explicit, Occurrence.explicit);
 		console.log(result);
 
 		return result;
@@ -35,16 +35,16 @@ export class CosemDataReader {
 			console.error(`CosemDataReader.readAsn1Type: definition ${definition.name}, property: ${property?.name}: Asn.1 Type not found: ${asn1TypeName}`);
 			return undefined;
 		}
-		const name = property?.name ?? definition.name;
+		const propertyName = property?.name;
 
-		const result = asn1Type.getLengthAndValue(name, this.rawData, this.currentIndex, subType, typeParameter, parentOccurrence, ancestorOccurrence);
+		const result = asn1Type.getLengthAndValue(propertyName, this.rawData, this.currentIndex, subType, typeParameter, parentOccurrence, ancestorOccurrence);
 		if(!result) return;
 
 		this.currentIndex += result?.encodingLength;
 
 		if(result?.asn1ResultType == Asn1ResultType.subType) {
 			for(let i = 0; i < result.count; i++) {
-				const subResult = this.readTypeDefinition(result.subType ?? '', parentOccurrence, ancestorOccurrence);
+				const subResult = this.readTypeDefinition(result.subType ?? '', undefined, parentOccurrence, ancestorOccurrence);
 				result.addSubResult(subResult);
 			}
 		}
@@ -55,15 +55,17 @@ export class CosemDataReader {
 	private getTypeValue(definition: TypeDefinition, property: Property | undefined, parentOccurrence: Occurrence): Result | undefined {
 		let customTypeName: string | undefined;
 		let asn1TypeName: string | undefined;
-		let occurrence = Occurrence.none
+		let occurrence: Occurrence;
 		let subType: string | undefined;
 		let typeParameter: string | undefined;
+		let parentProperty: Property | undefined;
 		if(property) {
 			customTypeName = property.customType;
 			asn1TypeName = property.asn1Type
 			occurrence = property.occurrence;
 			subType = property.subType
 			typeParameter = property.typeParameter
+			parentProperty = property;
 		} else {
 			customTypeName = definition.customType;
 			asn1TypeName = definition.asn1Type;
@@ -73,7 +75,7 @@ export class CosemDataReader {
 		}
 
 		if(customTypeName) {
-			return this.readTypeDefinition(customTypeName, occurrence, parentOccurrence);
+			return this.readTypeDefinition(customTypeName, parentProperty, occurrence, parentOccurrence);
 		} else if(asn1TypeName) {
 			return this.readAsn1TypeValue(definition, property, asn1TypeName, subType, typeParameter, occurrence, parentOccurrence);
 		}
@@ -82,7 +84,7 @@ export class CosemDataReader {
 		return;
 	}
 
-	private readTypeDefinition(definitionName: string, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	private readTypeDefinition(definitionName: string, parentProperty: Property | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
 		if(parentOccurrence == Occurrence.none) parentOccurrence = ancestorOccurrence;
 		const typeDefinition = this.cosemTypeDefinitionMap.get(definitionName);
 		if(!typeDefinition) {
@@ -91,19 +93,20 @@ export class CosemDataReader {
 		}
 
 		let result: Result | undefined = new Result({
-			name: typeDefinition.name,
-			typeName: typeDefinition.asn1Type ?? typeDefinition.customType,
+			propertyName: parentProperty?.name,
+			typeName: typeDefinition.name,
 			asn1ResultType: Asn1ResultType.container
 		})
 
 		switch(typeDefinition.blockMode) {
 			case BlockMode.single:
 				const getTypeValueResult = this.getTypeValue(typeDefinition, undefined, parentOccurrence);
-				if(!typeDefinition.asn1Type) {
-					result.addSubResult(getTypeValueResult);
-				} else {
-					result = getTypeValueResult;
-				}
+				result.addSubResult(getTypeValueResult);
+				// if(!typeDefinition.asn1Type) {
+				// 	result.addSubResult(getTypeValueResult);
+				// } else {
+				// 	result = getTypeValueResult;
+				// }
 				//console.log('CosemDataReader.definitionReader BlockMode.single:', result);
 				return result;
 			case BlockMode.choice:

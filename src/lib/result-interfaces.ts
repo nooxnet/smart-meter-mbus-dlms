@@ -1,3 +1,4 @@
+import { DateTime } from "./cosem/cosem-asn2ts/cosem-asn2ts-lib/asn-1-data-types";
 
 export interface DataNotification {
 	longInvokeIdAndPriority: LongInvokeIdAndPriority;
@@ -8,23 +9,6 @@ export interface DataNotification {
 export interface LongInvokeIdAndPriority {
 	hex: string;
 	dec: number;
-}
-
-export interface DateTime {
-	date: Date,
-	epoch: number,
-	asString: string;
-	deviation: number | undefined,
-	clockStatus: ClockStatus | undefined;
-}
-
-export interface ClockStatus {
-	clockStatusRaw: number;
-	invalid: boolean;
-	doubtful: boolean;
-	differentClockBase: boolean;
-	invalidClockStatus: boolean;
-	daylightSavingActive: boolean;
 }
 
 export interface NotificationBody {

@@ -21,10 +21,27 @@ export enum CosemResultType {
 	typeObisKey
 }
 
+export interface DateTime {
+	date: Date,
+	epoch: number,
+	asString: string;
+	deviation: number | undefined,
+	clockStatus: ClockStatus | undefined;
+}
+
+export interface ClockStatus {
+	clockStatusRaw: number;
+	invalid: boolean;
+	doubtful: boolean;
+	differentClockBase: boolean;
+	invalidClockStatus: boolean;
+	daylightSavingActive: boolean;
+}
+
 
 
 export interface IResult {
-	name: string;
+	propertyName: string | undefined;
 	typeName: string;
 	dataLength: number;
 	encodingLength: number;
@@ -35,30 +52,30 @@ export interface IResult {
 	cosemResultType: CosemResultType;
 	numberValue: number;
 	stringValue: string;
-	dateValue: Date;
+	dateTimeValue: DateTime;
 	subType: string;
 	//typeParameter: string;
 	results: Result[];
 }
 export class Result {
-	public name: string = '';
+	public propertyName: string = '';
 	public typeName: string | undefined;
 	public dataLength: number = 0;
 	public encodingLength: number = 0;
-	public count: number = 0;
+	public count: number | undefined = undefined;
 	public rawValue: Buffer | undefined;
 	public hexString: string = '';
 	public asn1ResultType: Asn1ResultType | undefined;
 	public cosemResultType: CosemResultType | undefined;
 	public numberValue: number | undefined;
 	public stringValue: string | undefined;
-	public dateValue: Date | undefined;
+	public dateTimeValue: DateTime | undefined;
 	public subType: string | undefined;
 	//public typeParameter: string | undefined;
 	public results: Result[] = [];
 
 	public constructor(init: Partial<IResult>) {
-		if(init.name != undefined) this.name = init.name
+		if(init.propertyName != undefined) this.propertyName = init.propertyName
 		if(init.typeName != undefined) this.typeName = init.typeName
 		if(init.dataLength != undefined) this.dataLength = init.dataLength
 		if(init.encodingLength != undefined) this.encodingLength = init.encodingLength
@@ -69,7 +86,7 @@ export class Result {
 		if(init.cosemResultType != undefined) this.cosemResultType = init.cosemResultType
 		if(init.numberValue != undefined) this.numberValue = init.numberValue
 		if(init.stringValue != undefined) this.stringValue = init.stringValue
-		if(init.dateValue != undefined) this.dateValue = init.dateValue
+		if(init.dateTimeValue != undefined) this.dateTimeValue = init.dateTimeValue
 		if(init.subType != undefined) this.subType = init.subType
 		//if(init.typeParameter != undefined) this.typeParameter = init.typeParameter
 		if(init.results != undefined) this.results = init.results
@@ -105,7 +122,7 @@ export class Asn1DataType {
 	// 	return undefined;
 	// }
 
-	public getLengthAndValue(name: string, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
 		console.error(`${this.constructor.name}.getLengthAndValueFromData() not implemented for ${name}`);
 		return undefined;
 	}
@@ -115,6 +132,75 @@ export class Asn1DataType {
 	protected static getOccurrence(parentOccurrence: Occurrence, ancestorOccurrence: Occurrence) {
 		return parentOccurrence != Occurrence.none ? parentOccurrence : ancestorOccurrence;
 	}
+
+
+	protected getDateTime(rawValue: Buffer, validYearFrom?: number, validYearTo?: number, validYearDeviation?: number): DateTime | undefined {
+		// DLMS/COSEM/OBIS Blue Book 4.1.6.1 Date formats
+		// not-specified handling not implemented
+		if(rawValue.length != 12) return;
+		if(validYearDeviation) {
+			const thisYear = new Date().getFullYear();
+			const min = thisYear - validYearDeviation;
+			const max = thisYear + validYearDeviation;
+			if(validYearFrom == undefined || validYearFrom > min) {
+				validYearFrom = min;
+			}
+			if(validYearTo == undefined || validYearTo < max) {
+				validYearTo = max;
+			}
+		}
+		const year = rawValue.readUInt16BE(0);
+		if(validYearFrom && year < validYearFrom) return;
+		if(validYearTo && year > validYearTo) return;
+
+		const month = rawValue.readUint8(2);
+		if(month > 12) return;
+		const day = rawValue.readUint8(3);
+		if(day > 31) return;
+		const dayOfWeek = rawValue.readUint8(4); // 1 .. 7 => Monday .. Sunday
+		if(dayOfWeek > 7) return;
+		const hour = rawValue.readUint8(5);
+		if(hour > 23) return;
+		const minute = rawValue.readUint8(6);
+		if(minute > 59) return;
+		const second = rawValue.readUint8(7);
+		if(second > 60) return // leap seconds?
+		const hundredthsOfSecond = rawValue.readUint8(8);
+		if(hundredthsOfSecond > 100) return
+		let deviation: number | undefined = rawValue.readInt16BE(9);
+		const clockStatusRaw = rawValue.readUint8(11);
+
+		const date = new Date(year, month - 1, day, hour, minute, second, hundredthsOfSecond * 10);
+		const epoch = date.getTime();
+		if(rawValue.readUInt16BE(9) == 0x800) {
+			deviation = undefined;
+		}
+
+		let clockStatus: ClockStatus | undefined;
+		if(clockStatusRaw != 0xFF) {
+			clockStatus = this.getClockStatus(clockStatusRaw);
+		}
+
+		return {
+			date,
+			epoch,
+			asString: date.toLocaleString('sv'),  // JS still sucks at time formatting. Workaround with Swedish time format to get somewhat ISO with local time zone.
+			deviation,
+			clockStatus,
+		};
+	}
+
+	private getClockStatus(clockStatusRaw: number): ClockStatus {
+		return {
+			clockStatusRaw,
+			invalid:                (clockStatusRaw & 0b00000001) == 0b00000001,
+			doubtful:               (clockStatusRaw & 0b00000010) == 0b00000010,
+			differentClockBase:     (clockStatusRaw & 0b00000100) == 0b00000100,
+			invalidClockStatus:     (clockStatusRaw & 0b00001000) == 0b00001000,
+			daylightSavingActive:   (clockStatusRaw & 0b10000000) == 0b10000000,
+		};
+	}
+
 }
 
 export class Asn1Boolean extends Asn1DataType {
@@ -128,7 +214,7 @@ export class Asn1Integer extends Asn1DataType {
 		return Asn1LengthType.parameter;
 	}
 
-	public getLengthAndValue(name: string, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
 		parentOccurrence =  Asn1DataType.getOccurrence(parentOccurrence, ancestorOccurrence);
 		if(parentOccurrence != Occurrence.implicit) {
 			console.error('Asn1Integer.getLengthAndValue: IMPLICIT only implemented.')
@@ -158,7 +244,7 @@ export class Asn1Integer extends Asn1DataType {
 		} else if(count <= 4294967296) {
 			length = 4;
 		} else if(count <= 4294967296 * 4294967296) {
-			length = 8;
+			//length = 8;
 			console.error(`Asn1Integer.getLengthAndValue: 64 bit integer not implemented. ${typeParameter}.`)
 			return undefined;
 		}
@@ -186,7 +272,7 @@ export class Asn1Integer extends Asn1DataType {
 			}
 		}
 		return new Result({
-			name,
+			propertyName,
 			typeName: this.typeName,
 			dataLength: length,
 			encodingLength: length,
@@ -209,7 +295,7 @@ export class Asn1OctetString extends Asn1DataType {
 		return Asn1LengthType.data;
 	}
 
-	public getLengthAndValue(name: string, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
 		parentOccurrence = Asn1DataType.getOccurrence(parentOccurrence, ancestorOccurrence);
 		if (parentOccurrence != Occurrence.implicit) {
 			console.error('Asn1OctetString.getLengthAndValue: IMPLICIT only implemented.')
@@ -223,15 +309,48 @@ export class Asn1OctetString extends Asn1DataType {
 		}
 		const rawValue = rawData.subarray(index + 1, index + 1 + length);
 		return new Result({
-			name,
+			propertyName,
 			typeName: this.typeName,
 			dataLength: length,
 			encodingLength: length + 1,
 			rawValue,
 			hexString: rawValue.toString('hex'),
 			asn1ResultType: Asn1ResultType.typeString,
-			stringValue:  rawValue.toString(),
+			stringValue:  this.toString(rawValue),
+			// The smart meter sends datetime values but one with a property name 'octet-string' instead of 'date-time'
+			// Only the OBIS identifier hints to a datetime, but at this stage we cannot make this connection.
+			// So we try to convert to datetime anyway:
+			dateTimeValue: this.getDateTime(rawValue, undefined, undefined, 10),
 		});
+	}
+
+	private isPrintableString(rawValue: Buffer): boolean {
+		for(const byte of rawValue) {
+			if(byte < 32) return false;
+			if(byte > 127) return false;
+		}
+		return true;
+	}
+
+
+	private toString(rawValue: Buffer): string {
+		if(this.isPrintableString(rawValue)) {
+			return rawValue.toString();
+		}
+		// const numbersAsString = [];
+		// for(const byte of rawValue) {
+		// 	numbersAsString.push(byte)
+		// }
+		// return numbersAsString.join(' ');
+		let numberString = '';
+		const len = rawValue.length;
+		if(len > 0) {
+			numberString = rawValue[0].toString();
+			for(let i = 1; i < len; i++) {
+				numberString += ` ${rawValue[i]}`;
+			}
+		}
+		return numberString;
 	}
 }
 
@@ -267,7 +386,7 @@ export class Asn1SequenceOf extends Asn1DataType {
 		return true
 	}
 
-	public getLengthAndValue(name: string, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
+	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence): Result | undefined {
 		parentOccurrence = Asn1DataType.getOccurrence(parentOccurrence, ancestorOccurrence);
 		if (parentOccurrence != Occurrence.implicit) {
 			console.error('Asn1SequenceOf.getLengthAndValue: IMPLICIT only implemented.')
@@ -281,7 +400,7 @@ export class Asn1SequenceOf extends Asn1DataType {
 		}
 		const rawValue = rawData.subarray(index, index + 1); // only length
 		return new Result({
-			name,
+			propertyName,
 			typeName: this.typeName,
 			dataLength: 0,
 			encodingLength: 1,
@@ -289,7 +408,6 @@ export class Asn1SequenceOf extends Asn1DataType {
 			rawValue,
 			hexString: rawValue.toString('hex'),
 			asn1ResultType: Asn1ResultType.subType,
-			numberValue: count,
 			subType
 		})
 	}
