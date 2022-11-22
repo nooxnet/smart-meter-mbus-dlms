@@ -37,7 +37,7 @@ export class SimpleXmlProcessor {
 			return '';
 		}
 		const xmlString = this.buildXml(analysisResult.xmlNode);
-		console.log(xmlString)
+		//console.log(xmlString)
 		return xmlString
 	}
 

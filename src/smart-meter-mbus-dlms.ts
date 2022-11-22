@@ -4,16 +4,18 @@ import { TelegramReader } from "./lib/telegram-reader";
 import { ApplicationDataState, TelegramState } from "./lib/enums";
 import { MultiTelegramReader } from "./lib/multi-telegram-reader";
 import { DebugSettings, SerialPortSettings, Settings } from "./lib/settings/setting-classes";
-import { Telegram } from "./lib/telegram";
-import { ApplicationProtocolDataUnit } from "./lib/application-protocol-data-unit";
+import { CosemDataReader } from "./lib/cosem-data-reader";
+import { cosemTypeDefinitionMap } from "./lib/cosem/generated/asn1-structure";
+import { CosemObisDataProcessor } from "./lib/cosem-obis-data-processor";
+import { DebugLogger } from "./lib/debug-logger.ts";
 
-let logSerialPortBuffers: Buffer[] = [];
-let logSerialPortByteCount = 0;
 let serialPortByteCount = 0;
 let telegramCount = 0;
 let applicationDataUnitCount = 0;
 let prematureStops = false;
 let port: SerialPort;
+const debugLogger = new DebugLogger();
+
 
 function main() {
 	Settings.read();
@@ -29,25 +31,41 @@ function main() {
 
 	const telegramReader = new TelegramReader();
 	const multiTelegramReader = new MultiTelegramReader(telegramReader);
+	const cosemDataReader = new CosemDataReader(cosemTypeDefinitionMap, 'XDLMS-APDU');
+	const cosemObisDataProcessor = new CosemObisDataProcessor();
 
 	port.on('data', function (serialPortData: Buffer) {
 		if(DebugSettings.logSerialPort) {
-			logSerialPortData(serialPortData);
+			debugLogger.logSerialPortData(serialPortData);
 		}
 
 		serialPortByteCount += serialPortData.length;
 
+		// read single MBus telegrams
 		const telegramResultState = telegramReader.addRawData(serialPortData);
 		if(telegramResultState == TelegramState.available) {
 			const telegrams = telegramReader.getTelegrams();
 			telegramCount += telegrams.length;
-			logTelegrams(telegrams);
+			debugLogger.logTelegrams(telegrams);
 
+			// combine telegrams and decrypt
 			const applicationDataUnitState = multiTelegramReader.addTelegrams(telegrams);
 			if(applicationDataUnitState == ApplicationDataState.available) {
 				const applicationDataUnits = multiTelegramReader.getApplicationDataUnits();
 				applicationDataUnitCount += applicationDataUnits.length
-				logApplicationDataUnits(applicationDataUnits);
+				debugLogger.logApplicationDataUnits(applicationDataUnits);
+
+				// analyze COSEM data
+				for(const applicationDataUnit of applicationDataUnits) {
+					const result = cosemDataReader.read(applicationDataUnit.decryptedPayload);
+					if(!result) continue;
+					debugLogger.logCosemData(result);
+
+					// extract obis values
+					const dataNotification = cosemObisDataProcessor.transform(result);
+					if(!dataNotification) continue;
+					debugLogger.logObisData(dataNotification);
+				}
 			}
 		}
 
@@ -63,45 +81,7 @@ function init() {
 	prematureStops = DebugSettings.maxBytes > 0 || DebugSettings.maxTelegrams > 0 || DebugSettings.maxApplicationDataUnits > 0;
 }
 
-function logSerialPortData(serialPortData: Buffer): void {
-	if(DebugSettings.logSerialPortMinBytes <= 1) {
-		console.log(serialPortData.toString('hex'));
-		return;
-	}
-	if(logSerialPortByteCount == 0 && serialPortData.length >= DebugSettings.logSerialPortMinBytes) {
-		console.log(serialPortData.toString('hex'));
-		return;
-	}
-	logSerialPortBuffers.push(serialPortData);
-	logSerialPortByteCount += serialPortData.length;
-	if(logSerialPortByteCount < DebugSettings.logSerialPortMinBytes) {
-		return;
-	}
-	console.log(Buffer.concat(logSerialPortBuffers).toString('hex'));
-	logSerialPortBuffers = [];
-	logSerialPortByteCount = 0;
-}
 
-function logTelegrams(telegrams: Telegram[]): void {
-	if(DebugSettings.logTelegramRaw){
-		telegrams.forEach((t) => console.log('Telegram: ', t.telegramRaw?.toString('hex')));
-	}
-	if(DebugSettings.logTelegramJson) {
-		telegrams.forEach((t) => console.log('Telegram: ', t));
-	}
-}
-
-function logApplicationDataUnits(applicationDataUnits: ApplicationProtocolDataUnit[]): void {
-	if(DebugSettings.logApduRaw){
-		applicationDataUnits.forEach((apdu) => console.log('APDU: ', apdu.apduRaw.toString('hex')));
-	}
-	if(DebugSettings.logApduJson) {
-		applicationDataUnits.forEach((apdu) => console.log('APDU: ', apdu));
-	}
-	if(DebugSettings.logApduDecryptedRaw) {
-		applicationDataUnits.forEach((apdu) => console.log('APDU payload decrypted: ', apdu.decryptedPayload.toString('hex')));
-	}
-}
 
 function checkForDebugStops() {
 	if( (DebugSettings.maxBytes == 0 || serialPortByteCount < DebugSettings.maxBytes) &&
@@ -110,9 +90,7 @@ function checkForDebugStops() {
 		return;
 	}
 
-	if(DebugSettings.logSerialPort && DebugSettings.logSerialPortMinBytes > 1 && logSerialPortByteCount > 0) {
-		console.log(Buffer.concat(logSerialPortBuffers).toString('hex'));
-	}
+	debugLogger.logSerialPortDataEnd();
 
 	port.close((error) => {
 		if(error) console.error(error);

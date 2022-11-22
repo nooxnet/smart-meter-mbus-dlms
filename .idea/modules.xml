@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/smartmeter-mbus-dlms.iml" filepath="$PROJECT_DIR$/.idea/smartmeter-mbus-dlms.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/smart-meter-mbus-dlms.iml" filepath="$PROJECT_DIR$/.idea/smart-meter-mbus-dlms.iml" />
     </modules>
   </component>
 </project>

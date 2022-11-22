@@ -2,10 +2,10 @@ const nodeExternals = require('webpack-node-externals');
 const webpack = require("webpack");
 
 module.exports = {
-	entry: './src/smartmeter-mbus-dlms.ts',
+	entry: './src/smart-meter-mbus-dlms.ts',
 	output: {
 		path: __dirname,
-		filename: 'index.js', // <-- Important
+		filename: 'smart-meter-mbus-dlms.js', // <-- Important
 		libraryTarget: 'this' // <-- Important
 	},
 	target: 'node', // <-- Important
@@ -26,7 +26,7 @@ module.exports = {
 		extensions: [ '.ts', '.tsx', '.js' ]
 	},
 	optimization: {
-		minimize: true
+		minimize: false
 	},
 	externals: [nodeExternals()], // <-- Important
 	plugins: [

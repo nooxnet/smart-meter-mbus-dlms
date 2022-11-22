@@ -45,7 +45,11 @@ export class ReceiveBuffer {
 			this._length = 0;
 			return false;
 		}
-		this.buffer.copy(this.buffer, 0, newStartByteIndex)
+		if(newStartByteIndex >= this._length) {
+			this._length = 0;
+			return false;
+		}
+		this.buffer.copy(this.buffer, 0, newStartByteIndex, this._length)
 		this._length -= newStartByteIndex;
 		return true;
 	}

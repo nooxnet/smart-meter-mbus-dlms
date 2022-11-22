@@ -23,6 +23,9 @@ export class TelegramReader {
 
 	public addRawData(newData: Buffer): TelegramState {
 		//console.log('TelegramReader.addRawData', JSON.stringify(newData));
+		//console.log(this.receiveBuffer.length);
+		//console.log('addRawData', this.possibleStartFound);
+		//console.log('addRawData', this.receiveBuffer);
 		let sourceStart = 0;
 		if(!this.possibleStartFound) {
 			sourceStart = newData.indexOf(TelegramReader.startByte);
@@ -34,6 +37,7 @@ export class TelegramReader {
 		if(!this.receiveBuffer.addBuffer(newData, sourceStart)) {
 			// buffer overflow (receiveBufferMaxSize), ignore data and carry on
 			this.receiveBuffer.reset();
+			this.resetSearch();
 			return this.areTelegramsAvailable();
 		}
 		// console.log('TelegramReader.addRawData this.data', JSON.stringify(this.data), this.data.length);
@@ -53,10 +57,12 @@ export class TelegramReader {
 	}
 
 	private checkTelegram(): TelegramState {
+		//console.log('checkTelegram receiveBuffer', this.receiveBuffer)
 		if(this.receiveBuffer.length < 4){
 			return this.areTelegramsAvailable();
 		}
 
+		//console.log('checkTelegram currentTelegram', this.currentTelegram)
 		if(this.currentTelegram.lengthData <= 0) {
 			// check for telegram start sequence
 			if(this.receiveBuffer.buffer[3] != TelegramReader.startByte || this.receiveBuffer.buffer[1] != this.receiveBuffer.buffer[2]) {

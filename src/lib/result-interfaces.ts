@@ -17,16 +17,18 @@ export interface NotificationBody {
 }
 
 export interface ObisValue {
-	obis: string;
-	numberValue: number;
+	obisCode: string;
+	obisFullName: string;
+	obisName: string;
+	numberValue: number | undefined;
 	stringValue: string,
 	unit: string;
-	obisRawValue: ObisRawValue
+	obisRaw: ObisRaw
 }
 
-export interface ObisRawValue {
-	obisRaw: string;
-	ValueRaw: string;
-	unitRaw: string;
-	scaling: number;
+export interface ObisRaw {
+	obisCodeRaw?: Buffer;
+	valueRaw?: Buffer;
+	numberValue?: number;
+	scaling?: number;
 }

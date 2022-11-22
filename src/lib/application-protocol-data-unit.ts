@@ -2,14 +2,16 @@ import { KeySet } from "./enums";
 import { Tools } from "./tools";
 
 export class ApplicationProtocolDataUnit {
-	public cypheringService: number;
+	private static readonly emptyBuffer = Buffer.from('');
 
-	public systemTitleLength: number;
+	public cypheringService: number = 0;
 
-	private _systemTitle: Buffer;
-	private _systemTitleManufacturerId: string;
-	private _systemTitleText: string;
-	private _serialNumber: number;
+	public systemTitleLength: number = 0;
+
+	private _systemTitle: Buffer = ApplicationProtocolDataUnit.emptyBuffer;
+	private _systemTitleManufacturerId: string = '';
+	private _systemTitleText: string = '';
+	private _serialNumber: number = 0;
 	public setSystemTitle(rawData: Buffer) {
 		this._systemTitle = rawData;
 		this._systemTitleManufacturerId = rawData.subarray(0, 3).toString();
@@ -52,10 +54,10 @@ export class ApplicationProtocolDataUnit {
 		return this._systemTitleText;
 	}
 
-	private _lengthFieldLength: number;
-	private _lengthTotal: number;
-	private _lengthEncryptedPayload: number;
-	private _lengthField: number;
+	private _lengthFieldLength: number = 0;
+	private _lengthTotal: number = 0;
+	private _lengthEncryptedPayload: number = 0;
+	private _lengthField: number = 0;
 	public setLength(buffer: Buffer, start = 0, end?: number): number {
 		if(end == undefined) end = buffer.length;
 		// length of length field is variable: 1 or 3 bytes long
@@ -84,12 +86,12 @@ export class ApplicationProtocolDataUnit {
 		return this._lengthField;
 	}
 
-	private _securityControl: number;
-	private _securitySuiteId: number;
-	private _securityAuthentication: boolean;   // subfield "A"
-	private _securityEncryption: boolean;       // subfield "E"
-	private _securityKeySet: KeySet;           // subfield Key_Set
-	private _securityCompression: boolean;
+	private _securityControl: number = 0;
+	private _securitySuiteId: number = 0;
+	private _securityAuthentication: boolean = false;       // subfield "A"
+	private _securityEncryption: boolean = false;           // subfield "E"
+	private _securityKeySet: KeySet = KeySet.broadcast;     // subfield Key_Set
+	private _securityCompression: boolean = false;
 
 	public set securityControl(value: number) {
 		this._securityControl = value;
@@ -119,8 +121,8 @@ export class ApplicationProtocolDataUnit {
 		return this._securityCompression;
 	}
 
-	private _frameCounter: Buffer
-	private _frameCounterNumber: number;
+	private _frameCounter: Buffer = ApplicationProtocolDataUnit.emptyBuffer;
+	private _frameCounterNumber: number = 0;
 	public setFrameCounter(buffer: Buffer, start: number = 0, end?: number) {
 		this._frameCounter = buffer.subarray(start, end);
 		this._frameCounterNumber = Tools.getNumberFromBuffer(this._frameCounter);
@@ -132,10 +134,10 @@ export class ApplicationProtocolDataUnit {
 		return this._frameCounterNumber;
 	}
 
-	public encryptedPayload: Buffer;
+	public encryptedPayload: Buffer = ApplicationProtocolDataUnit.emptyBuffer;
 
-	public decryptedPayload: Buffer;
+	public decryptedPayload: Buffer = ApplicationProtocolDataUnit.emptyBuffer;
 
 	// raw APDU data
-	public apduRaw: Buffer;
+	public apduRaw: Buffer = ApplicationProtocolDataUnit.emptyBuffer;
 }

@@ -17,7 +17,7 @@ export class MultiTelegramReader {
 	private currentSequenceNumber = 0;
 
 	// telegramReader would not be needed if addTelegram() is not used, but it has to be defined in the calling code anyway
-	constructor(private telegramReader: TelegramReader, private provisioning: ApplicationDataProvisioning = ApplicationDataProvisioning.all) {
+	constructor(private telegramReader: TelegramReader, private provisioning: ApplicationDataProvisioning = ApplicationDataProvisioning.all, private decrypt = true) {
 	}
 
 	public areApplicationDataUnitsAvailable(): ApplicationDataState {
@@ -81,14 +81,18 @@ export class MultiTelegramReader {
 			this.currentApplicationDataUnit.apduRaw = Buffer.concat(this.currentApplicationDataUnits);
 			this.currentApplicationDataUnit.encryptedPayload = this.currentApplicationDataUnit.apduRaw.subarray(16 + this.currentApplicationDataUnit.lengthFieldLength - 1)
 
-			ApplicationDataDecrypter.Decrypt(this.currentApplicationDataUnit);
+			// no decryption if testing
+			if(this.decrypt) {
+				ApplicationDataDecrypter.Decrypt(this.currentApplicationDataUnit);
 
-			if (this.currentApplicationDataUnit.lengthEncryptedPayload != this.currentApplicationDataUnit.encryptedPayload.length) {
-				console.warn(`addTelegrams: Application data length of combined segments invalid. Start over. Expected: ${this.currentApplicationDataUnit.lengthEncryptedPayload}. Received: ${this.currentApplicationDataUnit.encryptedPayload.length}`);
-				//console.log(JSON.stringify(this.currentApplicationDataUnit));
-				this.resetSearch();
-				continue;
+				if (this.currentApplicationDataUnit.lengthEncryptedPayload != this.currentApplicationDataUnit.encryptedPayload.length) {
+					console.warn(`addTelegrams: Application data length of combined segments invalid. Start over. Expected: ${this.currentApplicationDataUnit.lengthEncryptedPayload}. Received: ${this.currentApplicationDataUnit.encryptedPayload.length}`);
+					//console.log(JSON.stringify(this.currentApplicationDataUnit));
+					this.resetSearch();
+					continue;
+				}
 			}
+
 
 			// everything seems to be fine:
 			if(this.provisioning == ApplicationDataProvisioning.all) {

@@ -273,3 +273,72 @@ describe('TelegramReader complete data package second frame', () => {
 		expect(telegrams[0].lengthApplicationData).toBe(telegrams[0].applicationData?.length);
 	});
 });
+
+
+// describe('TelegramReader Bugs', () => {
+// 	//const stringData = '11406789abf2e11964d53937914ab2679d90fa1ed899e36fbf5d6f124bdea84151d03ecd55a4e150a7d6dd4e3a1e5ea7e583c680dfed8984510bf2b6346c3ec0c529d26c5488cffdce62e4c958aadbddc590647ced5d8a35feea8d4a3935f34a67ebdd343d8ce09645c0ccbb1859ea38422a8a5091a7add2';
+// 	const stringData = '9f79dc3e421a66950e7ea3eb8394236fde4c115c56f98d0c51c6f4a779cb247bdda9eea9d95f9b6819dc436e';
+// 	const buffer = Buffer.from(stringData, 'hex');
+// 	const telegramReader = new TelegramReader();
+//
+// 	test('ERR_OUT_OF_RANGE Buffer.copy targetStart', () => {
+// 		expect(telegramReader.addRawData(buffer)).toBe(TelegramState.pending);
+// 		expect(telegramReader["telegrams"].length).toBe(0);
+// 	});
+// });
+
+
+describe('TelegramReader Bug ERR_OUT_OF_RANGE Buffer.copy targetStart', () => {
+
+	const data = [
+		[0x9f, 0x79],
+		[0xdc, 0x3e, 0x42],
+		[0x1a],
+		[0x66],
+		[0x95],
+		[0x0e],
+		[0x7e],
+		[0xa3],
+		[0xeb],
+		[0x83],
+		[0x94],
+		[0x23],
+		[0x6f],
+		[0xde],
+		[0x4c],
+		[0x11],
+		[0x5c],
+		[0x56],
+		[0xf9],
+		[0x8d],
+		[0x0c],
+		[0x51, 0xc6, 0xf4, 0xa7, 0x79, 0xcb, 0x24],
+		[0x7b],
+		[0xdd],
+		[0xa9],
+		[0xee],
+		[0xa9],
+		[0xd9],
+		[0x5f],
+		[0x9b],
+		[0x68],
+		[0x19],
+		[0xdc],
+		[0x43],
+		[0x6e]
+	];
+	const telegramReader = new TelegramReader();
+
+	for(let i = 0; i < data.length; i++) {
+		test(`add data ([${i}]: len: ${data[i].length} first: ${data[i][0]})`, () => {
+			const buffer = Buffer.from(data[i]);
+			// console.log(i);
+			// if(i >= 29) {
+			// 	console.log('test', i);
+			// 	console.log('test new buffer', buffer);
+			// }
+			expect(telegramReader.addRawData(buffer)).toBe(TelegramState.pending);
+			expect(telegramReader["telegrams"]).toStrictEqual([]);
+		});
+	}
+});

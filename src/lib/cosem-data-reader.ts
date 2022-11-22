@@ -17,8 +17,7 @@ export class CosemDataReader {
 		this.currentIndex = 0;
 
 		const result = this.readTypeDefinition(this.startTypeDefinitionName, undefined, Occurrence.explicit, Occurrence.explicit, undefined);
-		console.log(result);
-
+		//console.log(result);
 		return result;
 	}
 
@@ -28,7 +27,6 @@ export class CosemDataReader {
 		}
 		const result = this.getTypeValue(definition, property, parentOccurrence, enrichData);
 		//console.log('CosemDataReader.readProperty:', result);
-		//if(!result) return;
 		return result;
 	}
 
@@ -127,7 +125,7 @@ export class CosemDataReader {
 				//console.log('CosemDataReader.definitionReader BlockMode.single:', result);
 				return result;
 			case BlockMode.choice:
-				const possibleTag = this.rawData.readInt8(this.currentIndex);
+				const possibleTag = this.rawData.readUint8(this.currentIndex);
 				const property = typeDefinition.taggedProperties[possibleTag];
 				if(!property) {
 					console.error(`CosemDataReader.definitionReader BlockMode.choice: definition ${definitionName}: CHOICE: property with tag ${possibleTag} not found.`);

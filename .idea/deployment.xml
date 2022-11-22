@@ -6,7 +6,7 @@
       <paths name="usbRaspi 192.168.1.18">
         <serverdata>
           <mappings>
-            <mapping deploy="/smartmeter-mbus-dlms" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/smart-meter-mbus-dlms" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
