@@ -16,6 +16,7 @@ export class CosemDataReader {
 		this.rawData = rawData;
 		this.currentIndex = 0;
 
+		// noinspection UnnecessaryLocalVariableJS
 		const result = this.readTypeDefinition(this.startTypeDefinitionName, undefined, Occurrence.explicit, Occurrence.explicit, undefined);
 		//console.log(result);
 		return result;
@@ -25,6 +26,7 @@ export class CosemDataReader {
 		if(property.name == 'enum') {
 			enrichData = (partialResult: Partial<IResult>) => this.enrichDataWithCosemEnumUnits(partialResult);
 		}
+		// noinspection UnnecessaryLocalVariableJS
 		const result = this.getTypeValue(definition, property, parentOccurrence, enrichData);
 		//console.log('CosemDataReader.readProperty:', result);
 		return result;

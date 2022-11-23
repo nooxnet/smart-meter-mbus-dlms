@@ -1,6 +1,3 @@
-
-
-
 export enum BlockMode {
 	none,
 	single,
@@ -9,15 +6,6 @@ export enum BlockMode {
 	enumerated,
 	bitString
 }
-
-// export interface DefinitionBlockModeNames {
-// 	[key:string]: DefinitionBlockMode
-// }
-// export const definitionModeNames: DefinitionBlockModeNames = {
-// 	'CHOICE': DefinitionBlockMode.choice,
-// 	'SEQUENCE': DefinitionBlockMode.sequence
-// }
-
 
 export enum Occurrence {
 	none,

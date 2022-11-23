@@ -1,7 +1,11 @@
 module.exports = {
 	ignorePatterns: [
-		'smart-meter-mbus-dlms.js',
-		'.eslintrc.js'
+		// 'smart-meter-mbus-dlms.js',
+		// '.eslintrc.js',
+		// 'webpack.config.js',
+		// 'babel.config.js'
+		'*.js',
+		'src/lib/cosem/cosem-asn2ts'
 	],
 	parser: '@typescript-eslint/parser',
 	plugins: ['@typescript-eslint'],
