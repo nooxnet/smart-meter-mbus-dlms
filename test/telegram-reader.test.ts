@@ -1,4 +1,4 @@
-import {TelegramReader} from '../src/lib/telegram-reader'
+import {TelegramReader} from '../src/lib/telegram-reader';
 import { TelegramState } from "../src/lib/enums";
 import { Tools } from "../src/lib/tools";
 
@@ -19,7 +19,7 @@ describe('TelegramReader basic', () => {
 
 	test('single start byte', () => {
 		const arr = [0x68];
-		const buffer = Buffer.from(arr)
+		const buffer = Buffer.from(arr);
 
 		expect(telegramReader.addRawData(buffer)).toBe(TelegramState.pending);
 		expect(telegramReader["receiveBuffer"].asNumberArray()).toStrictEqual(arr);
@@ -30,7 +30,7 @@ describe('TelegramReader basic', () => {
 	test('four start bytes', () => {
 		const len = 0x10;
 		const arr = [0x68, len, len, 0x68];
-		const buffer = Buffer.from(arr)
+		const buffer = Buffer.from(arr);
 		expect(telegramReader.addRawData(buffer)).toBe(TelegramState.pending);
 		expect(telegramReader["receiveBuffer"].asNumberArray()).toStrictEqual(arr);
 		expect((telegramReader["receiveBuffer"]).length).toBe(4);

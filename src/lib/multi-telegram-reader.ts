@@ -34,7 +34,7 @@ export class MultiTelegramReader {
 	}
 
 	public addTelegrams(newTelegrams: Telegram[]): ApplicationDataState {
-		for (let newTelegram of newTelegrams) {
+		for (const newTelegram of newTelegrams) {
 			if (newTelegram.sequenceNumber != this.currentSequenceNumber) {
 				console.log(`addTelegrams: Sequence number does not match. Start over. Expected: ${this.currentSequenceNumber}. Received: ${newTelegram.sequenceNumber}`);
 				this.resetSearch();
@@ -65,7 +65,7 @@ export class MultiTelegramReader {
 
 				// length field has either 1 byte (length <= 127) or 3 bytes
 				const lengthFieldLength = this.currentApplicationDataUnit.setLength(newTelegram.applicationData,10, 13);
-				const offset = lengthFieldLength - 1
+				const offset = lengthFieldLength - 1;
 
 				this.currentApplicationDataUnit.securityControl = newTelegram.applicationData[11 + offset];
 				this.currentApplicationDataUnit.setFrameCounter(newTelegram.applicationData, 12 + offset, 16 + offset);
@@ -79,7 +79,7 @@ export class MultiTelegramReader {
 
 			// last segment:
 			this.currentApplicationDataUnit.apduRaw = Buffer.concat(this.currentApplicationDataUnits);
-			this.currentApplicationDataUnit.encryptedPayload = this.currentApplicationDataUnit.apduRaw.subarray(16 + this.currentApplicationDataUnit.lengthFieldLength - 1)
+			this.currentApplicationDataUnit.encryptedPayload = this.currentApplicationDataUnit.apduRaw.subarray(16 + this.currentApplicationDataUnit.lengthFieldLength - 1);
 
 			// no decryption if testing
 			if(this.decrypt) {

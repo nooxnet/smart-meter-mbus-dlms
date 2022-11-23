@@ -2,7 +2,7 @@ import { CosemDataReader } from "../src/lib/cosem-data-reader";
 import { cosemTypeDefinitionMap } from "../src/lib/cosem/generated/asn1-structure";
 
 
-var cosemDataReader: CosemDataReader;
+let cosemDataReader: CosemDataReader;
 
 describe('CosemDataReader', () => {
 

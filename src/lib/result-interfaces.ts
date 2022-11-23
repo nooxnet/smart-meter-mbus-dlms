@@ -21,9 +21,9 @@ export interface ObisValue {
 	obisFullName: string;
 	obisName: string;
 	numberValue: number | undefined;
-	stringValue: string,
+	stringValue: string;
 	unit: string;
-	obisRaw: ObisRaw
+	obisRaw: ObisRaw;
 }
 
 export interface ObisRaw {

@@ -1,8 +1,4 @@
-
-import { Identifier } from "./identifier";
 import { TypeDefinitionProcessor } from "./type-definition-processor";
-import { Occurrence } from "./enums";
-
 
 export class EnumerationProcessor {
 	public name: string = '';

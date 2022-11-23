@@ -18,10 +18,10 @@ async function main() {
 	console.log('opening file', cosemAsnFile);
 	let data = await readFile(cosemAsnFile, 'utf-8');
 
-	console.log('removing comments ...')
+	console.log('removing comments ...');
 	data = removeComments(data);
 
-	console.log('splitting definitions ...')
+	console.log('splitting definitions ...');
 	splitDefinitions(data);
 
 	console.log('processing used definitions ...');
@@ -38,18 +38,20 @@ async function main() {
 		console.error(err);
 		process.exit(1);
 	}
-})();
+})()
+	.catch(err => console.error(err));
 
 function processUsedDefinitions() {
 	while(typesToProcess.length > 0) {
 		const typeToProcess = typesToProcess.shift();
 		//console.log(`processUsedDefinitions: ${typeToProcess} ...`);
-		const definitionToProcess = allDefinitionProcessorsRaw[typeToProcess!];
+		if(!typeToProcess) continue; // eslint
+		const definitionToProcess = allDefinitionProcessorsRaw[typeToProcess];
 		if(definitionToProcess.isProcessed) {
 			continue;
 		}
 		const childrenToProcess = definitionToProcess.process();
-		for(let childToProcess of childrenToProcess) {
+		for(const childToProcess of childrenToProcess) {
 			if(!typesToProcess.includes(childToProcess)) {
 				typesToProcess.push(childToProcess);
 			}
@@ -97,7 +99,7 @@ async function generateTypeScriptCode(): Promise<void> {
 		'import { BitString } from "../cosem-lib/bit-string";'
 	);
 
-	const assignments: string[] = []
+	const assignments: string[] = [];
 	for(const key in definitionProcessors) {
 		const definition = definitionProcessors[key];
 		parts.push(definition.generateCode());

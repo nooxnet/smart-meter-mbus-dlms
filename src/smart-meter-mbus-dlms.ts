@@ -1,13 +1,13 @@
 import { SerialPort } from 'serialport';
 
-import { TelegramReader } from "./lib/telegram-reader";
-import { ApplicationDataState, TelegramState } from "./lib/enums";
-import { MultiTelegramReader } from "./lib/multi-telegram-reader";
-import { DebugSettings, SerialPortSettings, Settings } from "./lib/settings/setting-classes";
-import { CosemDataReader } from "./lib/cosem-data-reader";
-import { cosemTypeDefinitionMap } from "./lib/cosem/generated/asn1-structure";
-import { CosemObisDataProcessor } from "./lib/cosem-obis-data-processor";
-import { DebugLogger } from "./lib/debug-logger.ts";
+import { TelegramReader } from './lib/telegram-reader';
+import { ApplicationDataState, TelegramState } from './lib/enums';
+import { MultiTelegramReader } from './lib/multi-telegram-reader';
+import { DebugSettings, SerialPortSettings, Settings } from './lib/settings/setting-classes';
+import { CosemDataReader } from './lib/cosem-data-reader';
+import { cosemTypeDefinitionMap } from './lib/cosem/generated/asn1-structure';
+import { CosemObisDataProcessor } from './lib/cosem-obis-data-processor';
+import { DebugLogger } from './lib/debug-logger.ts';
 
 let serialPortByteCount = 0;
 let telegramCount = 0;
@@ -16,8 +16,7 @@ let prematureStops = false;
 let port: SerialPort;
 const debugLogger = new DebugLogger();
 
-
-function main() {
+function main(): void {
 	Settings.read();
 	init();
 
@@ -43,16 +42,16 @@ function main() {
 
 		// read single MBus telegrams
 		const telegramResultState = telegramReader.addRawData(serialPortData);
-		if(telegramResultState == TelegramState.available) {
+		if(telegramResultState === TelegramState.available) {
 			const telegrams = telegramReader.getTelegrams();
 			telegramCount += telegrams.length;
 			debugLogger.logTelegrams(telegrams);
 
 			// combine telegrams and decrypt
 			const applicationDataUnitState = multiTelegramReader.addTelegrams(telegrams);
-			if(applicationDataUnitState == ApplicationDataState.available) {
+			if(applicationDataUnitState === ApplicationDataState.available) {
 				const applicationDataUnits = multiTelegramReader.getApplicationDataUnits();
-				applicationDataUnitCount += applicationDataUnits.length
+				applicationDataUnitCount += applicationDataUnits.length;
 				debugLogger.logApplicationDataUnits(applicationDataUnits);
 
 				// analyze COSEM data
@@ -70,23 +69,21 @@ function main() {
 		}
 
 		if(prematureStops) checkForDebugStops();
-	})
+	});
 
-	port.on('error', function(err) {
-		console.error('Serial port error: ', err.message)
-	})
+	port.on('error', function(err: any) {
+		console.error('Serial port error: ', err.message);
+	});
 }
 
-function init() {
+function init(): void {
 	prematureStops = DebugSettings.maxBytes > 0 || DebugSettings.maxTelegrams > 0 || DebugSettings.maxApplicationDataUnits > 0;
 }
 
-
-
 function checkForDebugStops() {
-	if( (DebugSettings.maxBytes == 0 || serialPortByteCount < DebugSettings.maxBytes) &&
-		(DebugSettings.maxTelegrams == 0 || telegramCount < DebugSettings.maxTelegrams) &&
-		(DebugSettings.maxApplicationDataUnits == 0 || applicationDataUnitCount < DebugSettings.maxApplicationDataUnits)) {
+	if( (DebugSettings.maxBytes === 0 || serialPortByteCount < DebugSettings.maxBytes) &&
+		(DebugSettings.maxTelegrams === 0 || telegramCount < DebugSettings.maxTelegrams) &&
+		(DebugSettings.maxApplicationDataUnits === 0 || applicationDataUnitCount < DebugSettings.maxApplicationDataUnits)) {
 		return;
 	}
 
@@ -101,7 +98,6 @@ function checkForDebugStops() {
 }
 
 main();
-
 
 
 

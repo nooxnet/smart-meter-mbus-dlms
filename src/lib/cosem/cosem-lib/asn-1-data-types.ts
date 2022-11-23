@@ -22,10 +22,10 @@ export enum CosemResultType {
 }
 
 export interface DateTime {
-	date: Date,
-	epoch: number,
+	date: Date;
+	epoch: number;
 	asString: string;
-	deviation: number | undefined,
+	deviation: number | undefined;
 	clockStatus: ClockStatus | undefined;
 }
 
@@ -73,21 +73,21 @@ export class Result {
 	public results: Result[] = [];
 
 	public constructor(init: Partial<IResult>) {
-		if(init.propertyName != undefined) this.propertyName = init.propertyName
-		if(init.typeName != undefined) this.typeName = init.typeName
-		if(init.dataLength != undefined) this.dataLength = init.dataLength
-		if(init.encodingLength != undefined) this.encodingLength = init.encodingLength
-		if(init.count != undefined) this.count = init.count
-		if(init.rawValue != undefined) this.rawValue = init.rawValue
-		if(init.hexString != undefined) this.hexString = init.hexString
-		if(init.asn1ResultType != undefined) this.asn1ResultType = init.asn1ResultType
+		if(init.propertyName != undefined) this.propertyName = init.propertyName;
+		if(init.typeName != undefined) this.typeName = init.typeName;
+		if(init.dataLength != undefined) this.dataLength = init.dataLength;
+		if(init.encodingLength != undefined) this.encodingLength = init.encodingLength;
+		if(init.count != undefined) this.count = init.count;
+		if(init.rawValue != undefined) this.rawValue = init.rawValue;
+		if(init.hexString != undefined) this.hexString = init.hexString;
+		if(init.asn1ResultType != undefined) this.asn1ResultType = init.asn1ResultType;
 		//if(init.cosemResultType != undefined) this.cosemResultType = init.cosemResultType
-		if(init.numberValue != undefined) this.numberValue = init.numberValue
-		if(init.stringValue != undefined) this.stringValue = init.stringValue
-		if(init.dateTimeValue != undefined) this.dateTimeValue = init.dateTimeValue
-		if(init.subType != undefined) this.subType = init.subType
+		if(init.numberValue != undefined) this.numberValue = init.numberValue;
+		if(init.stringValue != undefined) this.stringValue = init.stringValue;
+		if(init.dateTimeValue != undefined) this.dateTimeValue = init.dateTimeValue;
+		if(init.subType != undefined) this.subType = init.subType;
 		//if(init.typeParameter != undefined) this.typeParameter = init.typeParameter
-		if(init.results != undefined) this.results = init.results
+		if(init.results != undefined) this.results = init.results;
 	}
 
 	public addSubResult(subResult: Result | undefined) {
@@ -101,7 +101,7 @@ export class Result {
 	}
 }
 
-export type EnrichDataFunction = ((result: Partial<IResult>) => void) | undefined
+export type EnrichDataFunction = ((result: Partial<IResult>) => void) | undefined;
 
 
 export class Asn1DataType {
@@ -114,9 +114,10 @@ export class Asn1DataType {
 	}
 
 	public hasSubType(): boolean {
-		return false
+		return false;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		console.error(`${this.constructor.name}.getLengthAndValueFromData() not implemented for ${name}`);
 		return undefined;
@@ -156,9 +157,9 @@ export class Asn1DataType {
 		const minute = rawValue.readUint8(6);
 		if(minute > 59) return;
 		const second = rawValue.readUint8(7);
-		if(second > 60) return // leap seconds?
+		if(second > 60) return; // leap seconds?
 		const hundredthsOfSecond = rawValue.readUint8(8);
-		if(hundredthsOfSecond > 100) return
+		if(hundredthsOfSecond > 100) return;
 		let deviation: number | undefined = rawValue.readInt16BE(9);
 		const clockStatusRaw = rawValue.readUint8(11);
 
@@ -209,17 +210,17 @@ export class Asn1Integer extends Asn1DataType {
 	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		parentOccurrence =  Asn1DataType.getOccurrence(parentOccurrence, ancestorOccurrence);
 		if(parentOccurrence != Occurrence.implicit) {
-			console.error('Asn1Integer.getLengthAndValue: IMPLICIT only implemented.')
+			console.error('Asn1Integer.getLengthAndValue: IMPLICIT only implemented.');
 			return undefined;
 		}
 		//(0..4294967295)
 		if(!typeParameter) {
-			console.error('Asn1Integer.getLengthAndValue: typeParameter missing.')
+			console.error('Asn1Integer.getLengthAndValue: typeParameter missing.');
 			return undefined;
 		}
 		const matches = typeParameter.match(/^\((-?\d+)\.\.(-?\d+)\)/);
 		if(!matches  || matches.length != 3) {
-			console.error(`Asn1Integer.getLengthAndValue: invalid parameter ${typeParameter}.`)
+			console.error(`Asn1Integer.getLengthAndValue: invalid parameter ${typeParameter}.`);
 			return undefined;
 		}
 		const min = +matches[1];
@@ -237,7 +238,7 @@ export class Asn1Integer extends Asn1DataType {
 			length = 4;
 		} else if(count <= 4294967296 * 4294967296) {
 			//length = 8;
-			console.error(`Asn1Integer.getLengthAndValue: 64 bit integer not implemented. ${typeParameter}.`)
+			console.error(`Asn1Integer.getLengthAndValue: 64 bit integer not implemented. ${typeParameter}.`);
 			return undefined;
 		}
 		const rawValue = rawData.subarray(index, index + length);
@@ -249,7 +250,7 @@ export class Asn1Integer extends Asn1DataType {
 				case 4: numberValue = rawValue.readUint32BE(); break;
 				//case 8: bigNumberValue = rawValue.readBigUInt64BE(); break;
 				default:
-					console.error(`Asn1Integer.getLengthAndValue: Invalid length for unsigned. ${typeParameter}.`)
+					console.error(`Asn1Integer.getLengthAndValue: Invalid length for unsigned. ${typeParameter}.`);
 					return undefined;
 			}
 		} else if(-min == max + 1) {
@@ -259,7 +260,7 @@ export class Asn1Integer extends Asn1DataType {
 				case 4: numberValue = rawValue.readInt32BE(); break;
 				//case 8: bigNumberValue = rawValue.readBigUInt64BE(); break;
 				default:
-					console.error(`Asn1Integer.getLengthAndValue: Invalid length for signed. ${typeParameter}.`)
+					console.error(`Asn1Integer.getLengthAndValue: Invalid length for signed. ${typeParameter}.`);
 					return undefined;
 			}
 		}
@@ -294,13 +295,13 @@ export class Asn1OctetString extends Asn1DataType {
 	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		parentOccurrence = Asn1DataType.getOccurrence(parentOccurrence, ancestorOccurrence);
 		if (parentOccurrence != Occurrence.implicit) {
-			console.error('Asn1OctetString.getLengthAndValue: IMPLICIT only implemented.')
+			console.error('Asn1OctetString.getLengthAndValue: IMPLICIT only implemented.');
 			return undefined;
 		}
 
-		let length = rawData.readInt8(index);
+		const length = rawData.readInt8(index);
 		if(length > 127) {
-			console.error(`Asn1OctetString.getLengthAndValue: First byte > 127 (${length}). Maybe special encoding applies if first bit is set.`)
+			console.error(`Asn1OctetString.getLengthAndValue: First byte > 127 (${length}). Maybe special encoding applies if first bit is set.`);
 			return undefined;
 		}
 		const rawValue = rawData.subarray(index + 1, index + 1 + length);
@@ -382,19 +383,19 @@ export class Asn1SequenceOf extends Asn1DataType {
 	}
 
 	public hasSubType(): boolean {
-		return true
+		return true;
 	}
 
 	public getLengthAndValue(propertyName: string | undefined, rawData: Buffer, index: number, subType: string | undefined, typeParameter: string | undefined, parentOccurrence: Occurrence, ancestorOccurrence: Occurrence, enrichData: EnrichDataFunction): Result | undefined {
 		parentOccurrence = Asn1DataType.getOccurrence(parentOccurrence, ancestorOccurrence);
 		if (parentOccurrence != Occurrence.implicit) {
-			console.error('Asn1SequenceOf.getLengthAndValue: IMPLICIT only implemented.')
+			console.error('Asn1SequenceOf.getLengthAndValue: IMPLICIT only implemented.');
 			return undefined;
 		}
 
-		let count = rawData.readInt8(index);
+		const count = rawData.readInt8(index);
 		if(count > 127) {
-			console.error(`Asn1SequenceOf.getLengthAndValue: First byte > 127 (${length}). Maybe special encoding applies if first bit is set.`)
+			console.error(`Asn1SequenceOf.getLengthAndValue: First byte > 127 (${length}). Maybe special encoding applies if first bit is set.`);
 			return undefined;
 		}
 		const rawValue = rawData.subarray(index, index + 1); // only length
@@ -411,7 +412,7 @@ export class Asn1SequenceOf extends Asn1DataType {
 			hexString: rawValue.toString('hex'),
 			asn1ResultType: Asn1ResultType.subType,
 			subType
-		})
+		});
 	}
 }
 

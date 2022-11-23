@@ -41,7 +41,7 @@ export class TelegramReader {
 			return this.areTelegramsAvailable();
 		}
 		// console.log('TelegramReader.addRawData this.data', JSON.stringify(this.data), this.data.length);
-		return this.checkTelegram()
+		return this.checkTelegram();
 	}
 
 	// only fetch them once!
@@ -122,7 +122,7 @@ export class TelegramReader {
 		this.receiveBuffer = new ReceiveBuffer(TelegramReader.receiveBufferInitialSize, TelegramReader.receiveBufferMaxSize);
 		this.receiveBuffer.addBuffer(oldReceiveBuffer.buffer.subarray(0, oldReceiveBuffer.length), len);
 
-		return this.checkTelegram()
+		return this.checkTelegram();
 	}
 
 	private checkForNewStartIndex(): TelegramState {
@@ -137,7 +137,7 @@ export class TelegramReader {
 
 	private checkChecksum() {
 		const start = 4;
-		const end = this.currentTelegram.lengthTotal! - 2;
+		const end = this.currentTelegram.lengthTotal - 2;
 		let sum = 0;
 		for(let i = start; i < end; i++) {
 			sum += this.receiveBuffer.buffer[i];

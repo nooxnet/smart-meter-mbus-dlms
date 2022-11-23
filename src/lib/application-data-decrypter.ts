@@ -24,7 +24,7 @@ export class ApplicationDataDecrypter {
 
 		// workaround: use 'aes-128-ctr' with additional 4 bytes of iv like so:
 		const ctrIv = Buffer.concat([iv, Buffer.from("00000002", 'hex')]);
-		let decipher = crypto.createDecipheriv('aes-128-ctr', key, ctrIv);
+		const decipher = crypto.createDecipheriv('aes-128-ctr', key, ctrIv);
 
 		const update = decipher.update(applicationDataUnit.encryptedPayload);
 		//console.log('update', update.toString('hex'));

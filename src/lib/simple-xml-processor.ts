@@ -1,7 +1,7 @@
 import { Result } from "./cosem/cosem-lib/asn-1-data-types";
 
 interface SimpleXmlAttribute {
-	name: string,
+	name: string;
 	value: string;
 }
 
@@ -14,7 +14,7 @@ class SimpleXmlNode {
 		public attributes: SimpleXmlAttribute[] = [],
 		public comment?: string) {
 		if(children) {
-			this.children = children
+			this.children = children;
 		}
 	}
 }
@@ -33,25 +33,25 @@ export class SimpleXmlProcessor {
 	public transform(cosemAsn1Result: Result): string {
 		const analysisResult = this.analyzeTypeDefinition(cosemAsn1Result);
 		if (!analysisResult.xmlNode) {
-			console.warn(`SimpleXmlProcessor.SimpleXmlProcessor No nodes found.`)
+			console.warn(`SimpleXmlProcessor.SimpleXmlProcessor No nodes found.`);
 			return '';
 		}
 		const xmlString = this.buildXml(analysisResult.xmlNode);
 		//console.log(xmlString)
-		return xmlString
+		return xmlString;
 	}
 
 	private buildXml(currentNode: SimpleXmlNode, level: number = 0): string {
 		const indent = '\t'.repeat(level);
 		let attributes = '';
-		if(currentNode.attributes && currentNode.attributes.length > 0) {
+		if(currentNode.attributes.length > 0) {
 			attributes = ' ' + currentNode.attributes.map(a => `${a.name}="${this.xmlAttributeEncoding(a.value)}"`).join(' ');
 		}
 		const comment = currentNode.comment ? ` <!-- ${currentNode.comment} -->` : '';
 		const hasChildren = currentNode.children?.length ?? 0 > 0;
-		const closingDash = hasChildren ? '' : '/'
-		const encodedTag = this.xmlTagNameEncoding(currentNode.tagName)
-		let output = `${indent}<${encodedTag}${attributes}${closingDash}>${comment}\n`
+		const closingDash = hasChildren ? '' : '/';
+		const encodedTag = this.xmlTagNameEncoding(currentNode.tagName);
+		let output = `${indent}<${encodedTag}${attributes}${closingDash}>${comment}\n`;
 		if(!hasChildren) return output;
 
 		for(const child of currentNode.children) {
@@ -65,7 +65,7 @@ export class SimpleXmlProcessor {
 		return attributeValue
 			.replace('&', '&amp;')
 			.replace('"', '&quot;')
-			.replace('<', '&lt;')
+			.replace('<', '&lt;');
 	}
 
 	private xmlTagNameEncoding(tagName: string): string {
@@ -84,7 +84,7 @@ export class SimpleXmlProcessor {
 			} else if(result.numberValue != undefined) {
 				comment = result.numberValue.toString();
 				if(result.stringValue) {
-					comment += `, ${result.stringValue}`
+					comment += `, ${result.stringValue}`;
 				}
 			} else {
 				comment = result.stringValue;
@@ -97,7 +97,7 @@ export class SimpleXmlProcessor {
 			return {
 				value: result.hexString,
 				comment
-			}
+			};
 		}
 
 		const children: SimpleXmlNode[] = [];
@@ -121,10 +121,10 @@ export class SimpleXmlProcessor {
 			for(const propertyResult of result.results) {
 				const analysisReport = this.analyzeTypeDefinition(propertyResult);
 				if(!analysisReport.xmlNode) {
-					console.error(`SimpleXmlProcessor.analyzeTypeDefinition cosemAsn1Result ${result.propertyName} ${result.typeName} has multiple children but ${propertyResult.typeName} is probably missing a propertyName ${propertyResult.propertyName} so xmlTag missing.`)
+					console.error(`SimpleXmlProcessor.analyzeTypeDefinition cosemAsn1Result ${result.propertyName} ${result.typeName} has multiple children but ${propertyResult.typeName} is probably missing a propertyName ${propertyResult.propertyName} so xmlTag missing.`);
 					continue;
 				}
-				children.push(analysisReport.xmlNode)
+				children.push(analysisReport.xmlNode);
 			}
 		}
 		const attributes: SimpleXmlAttribute[] = [];
@@ -138,7 +138,7 @@ export class SimpleXmlProcessor {
 		}
 
 		// no property name && multiple children => something wrong:
-		console.error(`SimpleXmlProcessor.analyzeTypeDefinition cosemAsn1Result ${result.propertyName} ${result.typeName} has multiple children but has no propertyName. No valid XML.`)
+		console.error(`SimpleXmlProcessor.analyzeTypeDefinition cosemAsn1Result ${result.propertyName} ${result.typeName} has multiple children but has no propertyName. No valid XML.`);
 		return {
 			xmlNode: new SimpleXmlNode('__MissingPropertyName__', children, attributes)
 		};

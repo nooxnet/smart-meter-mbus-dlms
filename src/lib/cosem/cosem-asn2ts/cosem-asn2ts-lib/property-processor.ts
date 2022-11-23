@@ -1,4 +1,4 @@
-import { BlockMode, Occurrence } from "./enums";
+import { Occurrence } from "./enums";
 import { asn1DataTypes } from "../../cosem-lib/asn-1-data-types";
 import { Identifier } from "./identifier";
 import { TypeDefinitionProcessor } from "./type-definition-processor";
@@ -21,7 +21,7 @@ export class PropertyProcessor {
 		const nameString = `name: '${this.name}', `;
 		const tagString = this.tag !== undefined ? `tag: ${this.tag}, ` : '';
 		//const customTagString = this.customTag ? `customTag: '${this.customTag}',` : '';
-		const occurrenceString = `occurrence: Occurrence.${Occurrence[this.occurrence]}, `
+		const occurrenceString = `occurrence: Occurrence.${Occurrence[this.occurrence]}, `;
 		const customTypeString = this.customType ? `customType: '${this.customType}', ` : '';
 		const asn1TypeString = this.asn1Type ? `asn1Type: '${this.asn1Type}', ` : '';
 		const subTypeString = this.subType ? `subType: '${this.subType}', ` : '';
@@ -93,8 +93,8 @@ export class PropertyProcessor {
 		}
 
 		const dataType = parts.slice(currentIndex, endIndex).join(' ');
-		for(let [asn1DataTypeName, asn1DataType] of asn1DataTypes) {
-			const foundIndex = dataType.indexOf(asn1DataTypeName)
+		for(const [asn1DataTypeName, asn1DataType] of asn1DataTypes) {
+			const foundIndex = dataType.indexOf(asn1DataTypeName);
 			if(foundIndex != 0) {
 				continue;
 			}

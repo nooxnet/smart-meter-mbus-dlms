@@ -1,4 +1,4 @@
-import config  from 'config'
+import config  from 'config';
 //import * as config from 'config';
 
 export class SerialPortSettings {
@@ -40,7 +40,7 @@ export class DebugSettings {
 	public static maxApplicationDataUnits = 0;
 
 	public static logSerialPort: false;
-	public static logSerialPortMinBytes: 0          // log only after this number of bytes in queue
+	public static logSerialPortMinBytes: 0;          // log only after this number of bytes in queue
 	public static logTelegramRaw: false;
 	public static logTelegramJson: false;
 

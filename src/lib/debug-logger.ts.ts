@@ -65,8 +65,8 @@ export class DebugLogger {
 
 	public logCosemData(cosemResult: Result): void {
 		if(DebugSettings.logApduCosemJson) {
-			console.log('APDU COSEM Data:')
-			console.dir(cosemResult, { depth: null })
+			console.log('APDU COSEM Data:');
+			console.dir(cosemResult, { depth: null });
 		}
 
 		if(DebugSettings.logApduCosemXml) {
@@ -87,7 +87,7 @@ export class DebugLogger {
 			console.log('Custom Data Notification Obis Data (plain text):');
 			console.log('Invoke Id:', dataNotification?.longInvokeIdAndPriority?.dec);
 			console.log('Datetime:', dataNotification?.dateTime?.asString);
-			for(const obisValue of dataNotification?.notificationBody?.obisValues) {
+			for(const obisValue of dataNotification.notificationBody.obisValues) {
 				console.log(obisValue.obisCode, obisValue.obisName, obisValue.stringValue);
 			}
 		}

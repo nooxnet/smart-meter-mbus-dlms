@@ -49,7 +49,7 @@ export class ReceiveBuffer {
 			this._length = 0;
 			return false;
 		}
-		this.buffer.copy(this.buffer, 0, newStartByteIndex, this._length)
+		this.buffer.copy(this.buffer, 0, newStartByteIndex, this._length);
 		this._length -= newStartByteIndex;
 		return true;
 	}
@@ -59,7 +59,7 @@ export class ReceiveBuffer {
 		// stupid JS/Node: toJSON is 10 times faster.
 		// code similar to toJson:
 
-		const result: number[] = new Array(this._length);
+		const result: number[] = new Array(this._length) as number[];
 		for(let i = 0; i < this._length; i++) {
 			result[i] = this.buffer[i];
 		}

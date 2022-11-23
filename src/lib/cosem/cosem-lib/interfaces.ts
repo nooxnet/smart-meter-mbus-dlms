@@ -3,7 +3,7 @@ import { Enumeration } from "./enumeration";
 import { BitString } from "./bit-string";
 
 export interface TaggedProperties {
-	[tag: number]: Property;
+	[tag: number]: Property | undefined;
 }
 
 export interface Enumerations {

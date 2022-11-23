@@ -26,11 +26,11 @@ export class TypeDefinition {
 	public occurrence: Occurrence;
 	public tag: number | undefined;
 	public customTag: string | undefined;
-	public customType: string | undefined
+	public customType: string | undefined;
 	public asn1Type: string | undefined;
 	public typeParameter: string | undefined;
 
-	public properties: Property[]
+	public properties: Property[];
 	public taggedProperties: TaggedProperties = {};
 
 	public enumerations: Enumerations = {};
@@ -47,18 +47,18 @@ export class TypeDefinition {
 		this.typeParameter = init.typeParameter;
 
 		this.properties = init.properties ?? [];
-		for(let property of this.properties) {
+		for(const property of this.properties) {
 			if(property.tag != undefined) {
 				this.taggedProperties[property.tag] = property;
 			}
 		}
 		if(init.enumerations) {
-			for(let enumeration of init.enumerations) {
+			for(const enumeration of init.enumerations) {
 				this.enumerations[enumeration.value] = enumeration;
 			}
 		}
 		if(init.bitStrings) {
-			for(let bitString of init.bitStrings) {
+			for(const bitString of init.bitStrings) {
 				this.bitStrings[bitString.bit] = bitString;
 			}
 		}

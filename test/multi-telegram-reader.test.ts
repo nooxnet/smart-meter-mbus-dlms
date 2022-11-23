@@ -1,4 +1,4 @@
-import { TelegramReader } from '../src/lib/telegram-reader'
+import { TelegramReader } from '../src/lib/telegram-reader';
 import { ApplicationDataProvisioning, ApplicationDataState, TelegramState } from "../src/lib/enums";
 import { Tools } from "../src/lib/tools";
 import { MultiTelegramReader } from "../src/lib/multi-telegram-reader";

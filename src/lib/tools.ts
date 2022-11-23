@@ -16,8 +16,8 @@ export class Tools {
 
 	public static getByteArrayFromHexString(hexString: string): number[] {
 		// remove whitespaces
-		hexString = hexString.replace(/\s+/g, '')
-		let bytes = [];
+		hexString = hexString.replace(/\s+/g, '');
+		const bytes = [];
 		for (let c = 0; c < hexString.length; c += 2) {
 			bytes.push(parseInt(hexString.substring(c, c + 2), 16));
 		}
@@ -25,7 +25,7 @@ export class Tools {
 	}
 
 	public static getHexStringFromByteArray(bytes: number[], withSpaces = false) {
-		let hexStrings = [];
+		const hexStrings = [];
 		for (let i = 0; i < bytes.length; i++) {
 			const current = bytes[i] < 0 ? bytes[i] + 256 : bytes[i];
 			hexStrings.push((current >>> 4).toString(16));

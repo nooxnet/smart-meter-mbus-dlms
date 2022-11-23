@@ -26,7 +26,7 @@ export class CosemObisDataProcessor {
 		const dataNotificationResult = cosemAsn1Result?.results?.[0];
 		if(!this.areResultNamesOk(dataNotificationResult, 'data-notification', 'Data-Notification')) return;
 
-		const longInvokeIdAndPriority = this.getLongInvokeIdAndPriority (dataNotificationResult)
+		const longInvokeIdAndPriority = this.getLongInvokeIdAndPriority (dataNotificationResult);
 		if(!longInvokeIdAndPriority) return;
 
 		const dateTime = this.getDataNotificationDateTime(dataNotificationResult);
@@ -82,7 +82,7 @@ export class CosemObisDataProcessor {
 
 		// the first two children belong to one obis value: datetime/timestamp
 
-		if(!structureLevel1Result.results || structureLevel1Result.results.length < 2) {
+		if(structureLevel1Result.results.length < 2) {
 			console.error(`Invalid COSEM/ASN.1 result. DataNotification.NotificationBody.DataValue.Structure does not contain children.`);
 			return;
 		}
@@ -98,14 +98,14 @@ export class CosemObisDataProcessor {
 		if(!this.areResultNamesOk(obisValueDateTime, 'octet-string', 'OCTET STRING')) return;
 
 		const obisValues: ObisValue[] = [];
-		let obisRawValue: ObisRaw = {
+		const obisRawValue: ObisRaw = {
 			obisCodeRaw: obisCodeDateTime.rawValue,
 			valueRaw: obisValueDateTime.rawValue
-		}
+		};
 
 		if(!obisCodeDateTime.rawValue) return;
 
-		const obisCode = ObisTools.getObisCode(obisCodeDateTime.rawValue, DecodingSettings.language)
+		const obisCode = ObisTools.getObisCode(obisCodeDateTime.rawValue, DecodingSettings.language);
 
 		const obisValue: ObisValue = {
 			obisCode: obisCode.code,
@@ -115,8 +115,8 @@ export class CosemObisDataProcessor {
 			stringValue: obisValueDateTime.dateTimeValue?.asString ?? '',
 			unit: '',
 			obisRaw: obisRawValue,
-		}
-		obisValues.push(obisValue)
+		};
+		obisValues.push(obisValue);
 
 
 		for(let i = 2; i < structureLevel1Result.results.length; i++) {
@@ -132,7 +132,7 @@ export class CosemObisDataProcessor {
 			const obisCodeResult= obisCodeDataResult.results?.[0];
 			if(!this.areResultNamesOk(obisCodeResult, 'octet-string', 'OCTET STRING')) return;
 			if(!obisCodeResult.rawValue) return;
-			let obisCode = ObisTools.getObisCode(obisCodeResult.rawValue, DecodingSettings.language)
+			const obisCode = ObisTools.getObisCode(obisCodeResult.rawValue, DecodingSettings.language);
 
 			if(obisCode.code.startsWith('0')) {
 				if(structureLevel3Result.results.length != 2) {
@@ -158,8 +158,8 @@ export class CosemObisDataProcessor {
 						obisCodeRaw: obisCodeResult.rawValue,
 						valueRaw: obisValueResult.rawValue
 					},
-				}
-				obisValues.push(obisValue)
+				};
+				obisValues.push(obisValue);
 
 			} else {
 				if(structureLevel3Result.results.length != 3) {
@@ -206,7 +206,7 @@ export class CosemObisDataProcessor {
 				if(!obisValueUnitResult.rawValue) return;
 
 				let numberValue =  (obisValueResult.numberValue ?? 0);
-				const scale = obisValueScaleResult.numberValue ?? 0
+				const scale = obisValueScaleResult.numberValue ?? 0;
 				if(scale != 0) {
 					// numberValue *= (10**(obisValueScaleResult.numberValue ?? 0));
 					// let round = 0;
@@ -238,8 +238,8 @@ export class CosemObisDataProcessor {
 						numberValue: obisValueResult.numberValue,
 						scaling: obisValueScaleResult.numberValue
 					},
-				}
-				obisValues.push(obisValue)
+				};
+				obisValues.push(obisValue);
 			}
 		}
 

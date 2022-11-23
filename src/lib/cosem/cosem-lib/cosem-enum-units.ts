@@ -1,12 +1,12 @@
 
 
 export interface CosemEnumUnit {
-	enum: number,
-	unit: string,
-	quantity: string,
-	unitName: string,
-	siDefinition: string,
-	comment: string
+	enum: number;
+	unit: string;
+	quantity: string;
+	unitName: string;
+	siDefinition: string;
+	comment: string;
 }
 // Cosem Blue Book Edition 14 Chapter 4.3.2 Table 4
 export const cosemEnumUnitMap = new Map<number, CosemEnumUnit>([

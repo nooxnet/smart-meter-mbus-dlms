@@ -6,7 +6,8 @@
 	"scripts": {
 		"test": "jest",
 		"build": "webpack",
-		"build cosem-asn2ts": "tsc --build --force src/lib/cosem/cosem-asn2ts"
+		"build cosem-asn2ts": "tsc --build --force src/lib/cosem/cosem-asn2ts",
+		"lint": "eslint . --ext .ts"
 	},
 	"keywords": [],
 	"author": "",

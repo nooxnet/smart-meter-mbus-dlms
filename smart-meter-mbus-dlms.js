@@ -50,7 +50,7 @@ class ApplicationDataDecrypter {
         //decipher.setAuthTag(authTag);
         // workaround: use 'aes-128-ctr' with additional 4 bytes of iv like so:
         const ctrIv = Buffer.concat([iv, Buffer.from("00000002", 'hex')]);
-        let decipher = crypto.createDecipheriv('aes-128-ctr', key, ctrIv);
+        const decipher = crypto.createDecipheriv('aes-128-ctr', key, ctrIv);
         const update = decipher.update(applicationDataUnit.encryptedPayload);
         //console.log('update', update.toString('hex'));
         const final = decipher.final();
@@ -103,9 +103,9 @@ class ApplicationProtocolDataUnit {
         this._serialNumber = tools_1.Tools.getNumberFromBuffer(rawData, 5, 8);
         // system title text. at least for my KAIFA MA309M it seems to be:
         if (this._systemTitleManufacturerId == 'KFM') {
-            let first = rawData[3].toString(16).padStart(2, '0');
-            let second = rawData[4].toString(16).padStart(2, '0');
-            let rest = tools_1.Tools.getNumberFromBuffer(rawData, 5, 8).toString().padStart(7, '0');
+            const first = rawData[3].toString(16).padStart(2, '0');
+            const second = rawData[4].toString(16).padStart(2, '0');
+            const rest = tools_1.Tools.getNumberFromBuffer(rawData, 5, 8).toString().padStart(7, '0');
             this._systemTitleText = first[0] + this._systemTitleManufacturerId + first[1] + second + rest;
         }
         else {
@@ -122,7 +122,7 @@ class ApplicationProtocolDataUnit {
                 first = rawData.subarray(3, 3 + i).toString();
             }
             if (3 + i < 8) {
-                let padLength = (256 ** (5 - i)).toString().length;
+                const padLength = (256 ** (5 - i)).toString().length;
                 second = tools_1.Tools.getNumberFromByteArray([...rawData.subarray(3 + i, 8)]).toString().padStart(padLength, '0');
             }
             this._systemTitleText = this._systemTitleManufacturerId + first + second;
@@ -312,13 +312,13 @@ class CosemDataReader {
             console.error(`CosemDataReader.definitionReader: definition not found: ${definitionName}`);
             return;
         }
-        let result = new asn_1_data_types_1.Result({
+        const result = new asn_1_data_types_1.Result({
             propertyName: parentProperty === null || parentProperty === void 0 ? void 0 : parentProperty.name,
             typeName: typeDefinition.name,
             asn1ResultType: asn_1_data_types_1.Asn1ResultType.container
         });
         switch (typeDefinition.blockMode) {
-            case enums_1.BlockMode.single:
+            case enums_1.BlockMode.single: {
                 const getTypeValueResult = this.getTypeValue(typeDefinition, undefined, parentOccurrence, enrichData);
                 result.addSubResult(getTypeValueResult);
                 // if(!typeDefinition.asn1Type) {
@@ -328,7 +328,8 @@ class CosemDataReader {
                 // }
                 //console.log('CosemDataReader.definitionReader BlockMode.single:', result);
                 return result;
-            case enums_1.BlockMode.choice:
+            }
+            case enums_1.BlockMode.choice: {
                 const possibleTag = this.rawData.readUint8(this.currentIndex);
                 const property = typeDefinition.taggedProperties[possibleTag];
                 if (!property) {
@@ -339,7 +340,8 @@ class CosemDataReader {
                 const propertyResult = this.readProperty(typeDefinition, property, parentOccurrence, enrichData);
                 result.addSubResult(propertyResult);
                 return result;
-            case enums_1.BlockMode.sequence:
+            }
+            case enums_1.BlockMode.sequence: {
                 if (enrichData) {
                     console.warn(`CosemDataReader.definitionReader enrichData function set. Should not occur if multiple child properties exists.`);
                 }
@@ -347,6 +349,7 @@ class CosemDataReader {
                     result.addSubResult(this.readProperty(typeDefinition, property, parentOccurrence, undefined));
                 }
                 return result;
+            }
             default:
                 console.error(`CosemDataReader.definitionReader: definition ${definitionName}: BlockMode not implemented: ${enums_1.BlockMode[typeDefinition.blockMode]}`);
                 return;
@@ -440,7 +443,7 @@ class CosemObisDataProcessor {
         if (!this.areResultNamesOk(structureLevel1Result, 'structure', 'SEQUENCE OF'))
             return;
         // the first two children belong to one obis value: datetime/timestamp
-        if (!structureLevel1Result.results || structureLevel1Result.results.length < 2) {
+        if (structureLevel1Result.results.length < 2) {
             console.error(`Invalid COSEM/ASN.1 result. DataNotification.NotificationBody.DataValue.Structure does not contain children.`);
             return;
         }
@@ -457,7 +460,7 @@ class CosemObisDataProcessor {
         if (!this.areResultNamesOk(obisValueDateTime, 'octet-string', 'OCTET STRING'))
             return;
         const obisValues = [];
-        let obisRawValue = {
+        const obisRawValue = {
             obisCodeRaw: obisCodeDateTime.rawValue,
             valueRaw: obisValueDateTime.rawValue
         };
@@ -490,7 +493,7 @@ class CosemObisDataProcessor {
                 return;
             if (!obisCodeResult.rawValue)
                 return;
-            let obisCode = obis_tools_1.ObisTools.getObisCode(obisCodeResult.rawValue, setting_classes_1.DecodingSettings.language);
+            const obisCode = obis_tools_1.ObisTools.getObisCode(obisCodeResult.rawValue, setting_classes_1.DecodingSettings.language);
             if (obisCode.code.startsWith('0')) {
                 if (structureLevel3Result.results.length != 2) {
                     console.error(`Invalid COSEM/ASN.1 result. Obis code ${obisCode.code} is "${obisCode.medium}" but parent element does not contain 2 children (obis code, obis value).`);
@@ -743,6 +746,7 @@ class Asn1DataType {
     hasSubType() {
         return false;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getLengthAndValue(propertyName, rawData, index, subType, typeParameter, parentOccurrence, ancestorOccurrence, enrichData) {
         console.error(`${this.constructor.name}.getLengthAndValueFromData() not implemented for ${name}`);
         return undefined;
@@ -939,7 +943,7 @@ class Asn1OctetString extends Asn1DataType {
             console.error('Asn1OctetString.getLengthAndValue: IMPLICIT only implemented.');
             return undefined;
         }
-        let length = rawData.readInt8(index);
+        const length = rawData.readInt8(index);
         if (length > 127) {
             console.error(`Asn1OctetString.getLengthAndValue: First byte > 127 (${length}). Maybe special encoding applies if first bit is set.`);
             return undefined;
@@ -1027,7 +1031,7 @@ class Asn1SequenceOf extends Asn1DataType {
             console.error('Asn1SequenceOf.getLengthAndValue: IMPLICIT only implemented.');
             return undefined;
         }
-        let count = rawData.readInt8(index);
+        const count = rawData.readInt8(index);
         if (count > 127) {
             console.error(`Asn1SequenceOf.getLengthAndValue: First byte > 127 (${length}). Maybe special encoding applies if first bit is set.`);
             return undefined;
@@ -1308,18 +1312,18 @@ class TypeDefinition {
         this.asn1Type = init.asn1Type;
         this.typeParameter = init.typeParameter;
         this.properties = (_d = init.properties) !== null && _d !== void 0 ? _d : [];
-        for (let property of this.properties) {
+        for (const property of this.properties) {
             if (property.tag != undefined) {
                 this.taggedProperties[property.tag] = property;
             }
         }
         if (init.enumerations) {
-            for (let enumeration of init.enumerations) {
+            for (const enumeration of init.enumerations) {
                 this.enumerations[enumeration.value] = enumeration;
             }
         }
         if (init.bitStrings) {
-            for (let bitString of init.bitStrings) {
+            for (const bitString of init.bitStrings) {
                 this.bitStrings[bitString.bit] = bitString;
             }
         }
@@ -2622,7 +2626,7 @@ class DebugLogger {
         }
     }
     logObisData(dataNotification) {
-        var _a, _b, _c;
+        var _a, _b;
         if (setting_classes_1.DebugSettings.logObisValuesJson) {
             //console.log('Data Notification Obis Data: ', dataNotification);
             console.log('Custom Data Notification Obis Data (JSON):');
@@ -2632,7 +2636,7 @@ class DebugLogger {
             console.log('Custom Data Notification Obis Data (plain text):');
             console.log('Invoke Id:', (_a = dataNotification === null || dataNotification === void 0 ? void 0 : dataNotification.longInvokeIdAndPriority) === null || _a === void 0 ? void 0 : _a.dec);
             console.log('Datetime:', (_b = dataNotification === null || dataNotification === void 0 ? void 0 : dataNotification.dateTime) === null || _b === void 0 ? void 0 : _b.asString);
-            for (const obisValue of (_c = dataNotification === null || dataNotification === void 0 ? void 0 : dataNotification.notificationBody) === null || _c === void 0 ? void 0 : _c.obisValues) {
+            for (const obisValue of dataNotification.notificationBody.obisValues) {
                 console.log(obisValue.obisCode, obisValue.obisName, obisValue.stringValue);
             }
         }
@@ -2707,7 +2711,7 @@ class MultiTelegramReader {
         return this.areApplicationDataUnitsAvailable();
     }
     addTelegrams(newTelegrams) {
-        for (let newTelegram of newTelegrams) {
+        for (const newTelegram of newTelegrams) {
             if (newTelegram.sequenceNumber != this.currentSequenceNumber) {
                 console.log(`addTelegrams: Sequence number does not match. Start over. Expected: ${this.currentSequenceNumber}. Received: ${newTelegram.sequenceNumber}`);
                 this.resetSearch();
@@ -2794,13 +2798,13 @@ const smartmeter_obis_1 = __webpack_require__(914);
 class ObisTools {
     static getObisCode(rawObisCode, language = 'de') {
         let code = "";
-        let mediumCode;
+        // let mediumCode: number | undefined;
         let channelCode;
         let measurementCode;
         let measureTypeCode;
         let tariffCode;
         let previousMeasurementCode;
-        mediumCode = ObisTools.getSingleFromRaw(rawObisCode, 0);
+        const mediumCode = ObisTools.getSingleFromRaw(rawObisCode, 0);
         if (mediumCode != undefined) {
             code = mediumCode.toString();
             channelCode = ObisTools.getSingleFromRaw(rawObisCode, 1);
@@ -2824,7 +2828,7 @@ class ObisTools {
                 }
             }
         }
-        let obisCode = ObisTools.getCustomObisNames(code, language);
+        const obisCode = ObisTools.getCustomObisNames(code, language);
         if (obisCode) {
             return obisCode;
         }
@@ -3071,7 +3075,7 @@ class SimpleXmlProcessor {
         var _a, _b;
         const indent = '\t'.repeat(level);
         let attributes = '';
-        if (currentNode.attributes && currentNode.attributes.length > 0) {
+        if (currentNode.attributes.length > 0) {
             attributes = ' ' + currentNode.attributes.map(a => `${a.name}="${this.xmlAttributeEncoding(a.value)}"`).join(' ');
         }
         const comment = currentNode.comment ? ` <!-- ${currentNode.comment} -->` : '';
@@ -3393,14 +3397,14 @@ class Tools {
     static getByteArrayFromHexString(hexString) {
         // remove whitespaces
         hexString = hexString.replace(/\s+/g, '');
-        let bytes = [];
+        const bytes = [];
         for (let c = 0; c < hexString.length; c += 2) {
             bytes.push(parseInt(hexString.substring(c, c + 2), 16));
         }
         return bytes;
     }
     static getHexStringFromByteArray(bytes, withSpaces = false) {
-        let hexStrings = [];
+        const hexStrings = [];
         for (let i = 0; i < bytes.length; i++) {
             const current = bytes[i] < 0 ? bytes[i] + 256 : bytes[i];
             hexStrings.push((current >>> 4).toString(16));
@@ -3521,13 +3525,13 @@ function main() {
         serialPortByteCount += serialPortData.length;
         // read single MBus telegrams
         const telegramResultState = telegramReader.addRawData(serialPortData);
-        if (telegramResultState == enums_1.TelegramState.available) {
+        if (telegramResultState === enums_1.TelegramState.available) {
             const telegrams = telegramReader.getTelegrams();
             telegramCount += telegrams.length;
             debugLogger.logTelegrams(telegrams);
             // combine telegrams and decrypt
             const applicationDataUnitState = multiTelegramReader.addTelegrams(telegrams);
-            if (applicationDataUnitState == enums_1.ApplicationDataState.available) {
+            if (applicationDataUnitState === enums_1.ApplicationDataState.available) {
                 const applicationDataUnits = multiTelegramReader.getApplicationDataUnits();
                 applicationDataUnitCount += applicationDataUnits.length;
                 debugLogger.logApplicationDataUnits(applicationDataUnits);
@@ -3556,9 +3560,9 @@ function init() {
     prematureStops = setting_classes_1.DebugSettings.maxBytes > 0 || setting_classes_1.DebugSettings.maxTelegrams > 0 || setting_classes_1.DebugSettings.maxApplicationDataUnits > 0;
 }
 function checkForDebugStops() {
-    if ((setting_classes_1.DebugSettings.maxBytes == 0 || serialPortByteCount < setting_classes_1.DebugSettings.maxBytes) &&
-        (setting_classes_1.DebugSettings.maxTelegrams == 0 || telegramCount < setting_classes_1.DebugSettings.maxTelegrams) &&
-        (setting_classes_1.DebugSettings.maxApplicationDataUnits == 0 || applicationDataUnitCount < setting_classes_1.DebugSettings.maxApplicationDataUnits)) {
+    if ((setting_classes_1.DebugSettings.maxBytes === 0 || serialPortByteCount < setting_classes_1.DebugSettings.maxBytes) &&
+        (setting_classes_1.DebugSettings.maxTelegrams === 0 || telegramCount < setting_classes_1.DebugSettings.maxTelegrams) &&
+        (setting_classes_1.DebugSettings.maxApplicationDataUnits === 0 || applicationDataUnitCount < setting_classes_1.DebugSettings.maxApplicationDataUnits)) {
         return;
     }
     debugLogger.logSerialPortDataEnd();

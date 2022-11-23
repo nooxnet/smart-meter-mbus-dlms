@@ -19,9 +19,9 @@ export class ApplicationProtocolDataUnit {
 
 		// system title text. at least for my KAIFA MA309M it seems to be:
 		if(this._systemTitleManufacturerId == 'KFM') {
-			let first = rawData[3].toString(16).padStart(2, '0');
-			let second = rawData[4].toString(16).padStart(2, '0');
-			let rest = Tools.getNumberFromBuffer(rawData, 5, 8).toString().padStart(7, '0');
+			const first = rawData[3].toString(16).padStart(2, '0');
+			const second = rawData[4].toString(16).padStart(2, '0');
+			const rest = Tools.getNumberFromBuffer(rawData, 5, 8).toString().padStart(7, '0');
 			this._systemTitleText = first[0] + this._systemTitleManufacturerId + first[1] + second + rest;
 		} else {
 			// just a guess ...
@@ -32,13 +32,13 @@ export class ApplicationProtocolDataUnit {
 				i++;
 			}
 			let first = '';
-			let second = ''
+			let second = '';
 
 			if(i > 0) {
 				first = rawData.subarray(3, 3 + i).toString();
 			}
 			if(3 + i < 8) {
-				let padLength = (256 ** (5 - i)).toString().length;
+				const padLength = (256 ** (5 - i)).toString().length;
 				second = Tools.getNumberFromByteArray([...rawData.subarray(3 + i, 8)]).toString().padStart(padLength, '0');
 			}
 			this._systemTitleText = this._systemTitleManufacturerId + first + second;

@@ -11,20 +11,20 @@ export class Telegram {
 	public set lengthData(len: number) {
 		this._lengthData = len;
 		this._lengthTotal = len + 6;   // 2x start, 2x len, checksum, stop
-		this._lengthTransportData = len - 2  // len user-data + C, A, CI field. CI is part of transport layer
+		this._lengthTransportData = len - 2;  // len user-data + C, A, CI field. CI is part of transport layer
 		this._lengthApplicationData = len - 5; // transport minus CI, STSAP, DTSAP
 	}
 	public get lengthData(): number {
-		return this._lengthData
+		return this._lengthData;
 	}
 	public get lengthTotal(): number {
-		return this._lengthTotal
+		return this._lengthTotal;
 	}
 	public get lengthTransportData(): number {
-		return this._lengthTransportData
+		return this._lengthTransportData;
 	}
 	public get lengthApplicationData(): number {
-		return this._lengthApplicationData
+		return this._lengthApplicationData;
 	}
 
 	public checkSum: number = -1;

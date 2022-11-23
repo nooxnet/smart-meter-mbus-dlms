@@ -14,14 +14,14 @@ export interface ObisCode {
 export class ObisTools {
 	public static getObisCode(rawObisCode: Buffer, language: string = 'de'): ObisCode {
 		let code = "";
-		let mediumCode: number | undefined;
+		// let mediumCode: number | undefined;
 		let channelCode: number | undefined;
 		let measurementCode: number | undefined;
 		let measureTypeCode: number | undefined;
 		let tariffCode: number | undefined;
 		let previousMeasurementCode: number | undefined;
 
-		mediumCode = ObisTools.getSingleFromRaw(rawObisCode, 0);
+		const mediumCode = ObisTools.getSingleFromRaw(rawObisCode, 0);
 		if(mediumCode != undefined) {
 			code = mediumCode.toString();
 			channelCode = ObisTools.getSingleFromRaw(rawObisCode, 1);
@@ -46,7 +46,7 @@ export class ObisTools {
 			}
 		}
 
-		let obisCode = ObisTools.getCustomObisNames(code, language);
+		const obisCode = ObisTools.getCustomObisNames(code, language);
 		if(obisCode) {
 			return obisCode;
 		}

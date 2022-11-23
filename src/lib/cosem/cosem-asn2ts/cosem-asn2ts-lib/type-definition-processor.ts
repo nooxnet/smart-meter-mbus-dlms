@@ -16,14 +16,14 @@ export class TypeDefinitionProcessor {
 
 	public maxLevel: number = 0;
 	public blockMode: BlockMode = BlockMode.none;
-	public occurrence: Occurrence = Occurrence.none
+	public occurrence: Occurrence = Occurrence.none;
 	public tag: number | undefined = undefined;
 	public customTag: string | undefined;
 	public customType: string = '';
-	public asn1Type: string = ''
-	public typeParameter: string = ''
+	public asn1Type: string = '';
+	public typeParameter: string = '';
 
-	public rawLevel1Content = new RawContent()
+	public rawLevel1Content = new RawContent();
 
 	public propertyProcessors: PropertyProcessor[] = [];
 	public taggedPropertyProcessors: TaggedPropertyProcessors = {};
@@ -52,29 +52,29 @@ export class TypeDefinitionProcessor {
 		if(this.propertyProcessors.length > 0) {
 			propertyString = `\n\tproperties: [
 		${this.propertyProcessors.map(p => p.generateCode()).join(',\n\t\t')}
-	],`
+	],`;
 		}
 
 		let enumerationString: string = '';
-		const enumerationStringArray: string[] = []
+		const enumerationStringArray: string[] = [];
 		for(const key in this.enumerationProcessors) {
 			enumerationStringArray.push(this.enumerationProcessors[key].generateCode());
 		}
 		if(enumerationStringArray.length > 0) {
 			enumerationString = `\n\tenumerations: [
 		${enumerationStringArray.join(',\n\t\t')}
-	],`
+	],`;
 		}
 
 		let bitStringString: string = '';
-		const bitStringStringArray: string[] = []
+		const bitStringStringArray: string[] = [];
 		for(const key in this.bitStringProcessors) {
 			bitStringStringArray.push(this.bitStringProcessors[key].generateCode());
 		}
 		if(bitStringStringArray.length > 0) {
 			bitStringString = `\n\tbitStrings: [
 		${bitStringStringArray.join(',\n\t\t')}
-	],`
+	],`;
 		}
 
 		return `const ${saveName} = new TypeDefinition({
@@ -89,9 +89,9 @@ export class TypeDefinitionProcessor {
 	}
 
 	public process(): string[] {
-// if(this.rawText.indexOf('(0)') >= 0) {
-// 	console.log(this.key, this.rawText)
-// }
+		// if(this.rawText.indexOf('(0)') >= 0) {
+		// 	console.log(this.key, this.rawText)
+		// }
 		if(this.isProcessed) return [];
 		this.rawLevel1Content = this.splitContent(this.rawText);
 		this.setAttributes(this.rawLevel1Content.single);
@@ -102,33 +102,33 @@ export class TypeDefinitionProcessor {
 
 		const childTypes: string[] = [];
 		if(this.blockMode == BlockMode.enumerated) {
-			for(let rawEnumeration of this.rawLevel1Content.block){
+			for(const rawEnumeration of this.rawLevel1Content.block){
 				const enumeration = new EnumerationProcessor(this, rawEnumeration);
 				enumeration.process();
 				this.enumerationProcessors[enumeration.value] = enumeration;
 			}
 		} else if(this.blockMode == BlockMode.bitString) {
-			for(let rawBitString of this.rawLevel1Content.block){
+			for(const rawBitString of this.rawLevel1Content.block){
 				const bitString = new BitStringProcessor(this, rawBitString);
 				bitString.process();
 				this.bitStringProcessors[bitString.bit] = bitString;
 			}
 		} else {
-			for(let rawProperty of this.rawLevel1Content.block){
+			for(const rawProperty of this.rawLevel1Content.block){
 				const property = new PropertyProcessor(this, rawProperty);
 				this.propertyProcessors.push(property);
 				property.process();
 				if(property.tag !== undefined) {
 					this.taggedPropertyProcessors[property.tag] = property;
 				}
-// if(property.customType == 'Data' || property.subType == 'Data') {
-// 	console.log('add Data to childTypes');
-// }
+				// if(property.customType == 'Data' || property.subType == 'Data') {
+				// 	console.log('add Data to childTypes');
+				// }
 				if(property.customType && !childTypes.includes(property.customType)) {
-					childTypes.push(property.customType)
+					childTypes.push(property.customType);
 				}
 				if(property.subType && !childTypes.includes(property.subType)) {
-					childTypes.push(property.subType)
+					childTypes.push(property.subType);
 				}
 			}
 		}
@@ -161,10 +161,10 @@ export class TypeDefinitionProcessor {
 		}
 
 		if(text.indexOf(Identifier.implicit) == 0) {
-			this.occurrence = Occurrence.implicit
+			this.occurrence = Occurrence.implicit;
 			text = text.substring(Identifier.implicit.length).trim();
 		} else if(rawText.indexOf(Identifier.explicit) > 0) {
-			this.occurrence = Occurrence.explicit
+			this.occurrence = Occurrence.explicit;
 			text = text.substring(Identifier.explicit.length).trim();
 		}
 
@@ -174,8 +174,8 @@ export class TypeDefinitionProcessor {
 			// check from asn1 data type::
 
 			const dataType = text;
-			for(let [asn1DataTypeName, asn1DataType] of asn1DataTypes) {
-				const foundIndex = dataType.indexOf(asn1DataTypeName)
+			for(const [asn1DataTypeName, ] of asn1DataTypes) {
+				const foundIndex = dataType.indexOf(asn1DataTypeName);
 				if(foundIndex != 0) {
 					continue;
 				}
@@ -212,13 +212,13 @@ export class TypeDefinitionProcessor {
 		}
 
 
- 	}
+	}
 
 	private splitContent(rawText: string): RawContent {
 		const rawContent = new RawContent();
 		const maxLen = rawText.length;
 		let currentStartIndex = 0;
-		let currentTextStartIndex = 0
+		let currentTextStartIndex = 0;
 		let curLevel = 0;
 		while(true) {
 			let separatorIndex = rawText.indexOf(',', currentStartIndex);
@@ -257,14 +257,14 @@ export class TypeDefinitionProcessor {
 					console.error(`Definition.splitContent(): "," not allowed outside of block "{ ... }" in definition ${this.name}`);
 					process.exit(0);
 				}
-				rawContent.block.push(rawText.substring(currentTextStartIndex, separatorIndex).trim())
+				rawContent.block.push(rawText.substring(currentTextStartIndex, separatorIndex).trim());
 				currentStartIndex = separatorIndex + 1;
 				if(curLevel == 1) {
 					currentTextStartIndex = currentStartIndex;
 				}
 			} else if(closeIndex < openIndex && closeIndex < separatorIndex) {
 				if(curLevel == 1) {
-					rawContent.block.push(rawText.substring(currentTextStartIndex, closeIndex).trim())
+					rawContent.block.push(rawText.substring(currentTextStartIndex, closeIndex).trim());
 				}
 				curLevel--;
 				if(curLevel < 0) {
