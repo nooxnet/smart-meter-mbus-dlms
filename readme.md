@@ -2,6 +2,7 @@ NPM installs:
 * npm i serialport 
 * npm i config
 * npm i smartmeter-obis
+* npm i mqtt
 
 
 NPM for Dev

@@ -8,6 +8,7 @@ import { CosemDataReader } from './lib/cosem-data-reader';
 import { cosemTypeDefinitionMap } from './lib/cosem/generated/asn1-structure';
 import { CosemObisDataProcessor } from './lib/cosem-obis-data-processor';
 import { DebugLogger } from './lib/debug-logger.ts';
+import { MqttPublisher } from './lib/mqtt-publisher';
 
 let serialPortByteCount = 0;
 let telegramCount = 0;
@@ -32,6 +33,7 @@ function main(): void {
 	const multiTelegramReader = new MultiTelegramReader(telegramReader);
 	const cosemDataReader = new CosemDataReader(cosemTypeDefinitionMap, 'XDLMS-APDU');
 	const cosemObisDataProcessor = new CosemObisDataProcessor();
+	const mqttPublisher = new MqttPublisher();
 
 	port.on('data', function (serialPortData: Buffer) {
 		if(DebugSettings.logSerialPort) {
@@ -60,10 +62,13 @@ function main(): void {
 					if(!result) continue;
 					debugLogger.logCosemData(result);
 
-					// extract obis values
+					// extract OBIS values
 					const dataNotification = cosemObisDataProcessor.transform(result);
 					if(!dataNotification) continue;
 					debugLogger.logObisData(dataNotification);
+
+					// publish to MQTT broker
+					mqttPublisher.publish(dataNotification);
 				}
 			}
 		}

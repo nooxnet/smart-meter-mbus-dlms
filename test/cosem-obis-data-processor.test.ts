@@ -19,6 +19,4 @@ describe('CosemDataReader', () => {
 	test('test APDU', () => {
 		expect(cosemObisDataProcessor.transform(cosemAsn1Result)).toBeDefined();
 	});
-
-
 });

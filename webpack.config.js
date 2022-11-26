@@ -3,6 +3,12 @@ const webpack = require("webpack");
 const forkTsCheckerNotifierWebpackPlugin = require('fork-ts-checker-notifier-webpack-plugin');
 const forkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
+// multiple entries/outputs:
+// https://stackoverflow.com/a/63426778/5550687
+// https://stackoverflow.com/a/45278943/5550687
+// ts-loader has problems: https://github.com/TypeStrong/ts-loader/issues/54
+
+
 module.exports = {
 	entry: './src/smart-meter-mbus-dlms.ts',
 	output: {

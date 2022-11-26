@@ -35,6 +35,7 @@ export class CosemObisDataProcessor {
 		const notificationBody = this.getNotificationBody(dataNotificationResult);
 		if(!notificationBody) return;
 
+		// noinspection TypeScriptExplicitMemberType
 		const dataNotification = {
 			longInvokeIdAndPriority,
 			dateTime,
@@ -208,21 +209,20 @@ export class CosemObisDataProcessor {
 				let numberValue =  (obisValueResult.numberValue ?? 0);
 				const scale = obisValueScaleResult.numberValue ?? 0;
 				if(scale != 0) {
-					// numberValue *= (10**(obisValueScaleResult.numberValue ?? 0));
-					// let round = 0;
-					// if(scale < 0) {
-					//
+					numberValue *= (10**(obisValueScaleResult.numberValue ?? 0));
+					if(scale < 0) {
+						const roundingFactor = 10**(-scale);
+						numberValue = Math.round(numberValue * roundingFactor) / roundingFactor;
+					}
+					// let scaleTmp = scale;
+					// while(scaleTmp > 0) {
+					// 	numberValue *= 10;
+					// 	scaleTmp--;
 					// }
-					// less rounding issues:
-					let scaleTmp = scale;
-					while(scaleTmp > 0) {
-						numberValue *= 10;
-						scaleTmp--;
-					}
-					while(scaleTmp< 0) {
-						numberValue /= 10;
-						scaleTmp++;
-					}
+					// while(scaleTmp< 0) {
+					// 	numberValue /= 10;
+					// 	scaleTmp++;
+					// }
 				}
 
 				const obisValue: ObisValue = {

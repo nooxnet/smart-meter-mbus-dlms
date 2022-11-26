@@ -27,9 +27,85 @@ export class DecryptionSettings {
 
 export class DecodingSettings {
 	public static language: 'de' | 'en' = 'en';
+	public static obisNameFormat: string = '[measurement]';
+	public static obisNameDelimiterCharacters: string = ''; // ',-. ';
 
 	public static read() {
 		DecodingSettings.language = config.get('decoding.obisLanguage');
+		DecodingSettings.obisNameFormat = config.get('decoding.obisNameFormat');
+		DecodingSettings.obisNameDelimiterCharacters = config.get('decoding.obisNameDelimiterCharacters');
+
+	}
+}
+
+export class MqttSettings {
+	public static enabled: boolean = false;
+	public static testMode: boolean = false;
+	public static testModeNoLogging: boolean = false;  // only internally when running tests
+
+	public static host: string = '';
+	public static port: number = 1883;
+	public static clientId: string = '';
+	public static username: string = '';
+	public static password: string = '';
+
+	public static topicBase: string = 'SmartMeter/Electricity/';
+	public static topicObisIdentifier: string = 'name';
+
+	public static topicIdentifierInvalidCharsRegex: string = '';
+	public static topicIdentifierInvalidCharsReplacement: string = '';
+	public static topicIdentifierReplaceUmlauts: boolean = true;
+
+	public static publishSingleJson: boolean = false;
+	public static publishIndividualValues: boolean = false;
+	public static includeUnitInIndividualValues: boolean = false;
+	public static valueDateTimeFormat: 'epoch' | 'iso' | 'js' | 'iso-local' = 'epoch';
+
+	public static minSecondsBetweenMessages: number = 0;
+	public static publishIntervalSeconds: number[] = [];
+	public static publishIntervalMinutes: number[] = [];
+
+	public static read() {
+		MqttSettings.enabled = config.get('mqtt.enabled');
+		MqttSettings.testMode = config.get('mqtt.testMode');
+
+		MqttSettings.host = config.get('mqtt.host');
+		MqttSettings.port = config.get('mqtt.port');
+		MqttSettings.clientId = config.get('mqtt.clientId');
+		MqttSettings.username = config.get('mqtt.username');
+		MqttSettings.password = config.get('mqtt.password');
+
+		MqttSettings.topicBase = config.get('mqtt.topicBase');
+		if(!MqttSettings.topicBase.endsWith('/')) {
+			MqttSettings.topicBase = '/';
+		}
+		MqttSettings.topicObisIdentifier = config.get('mqtt.topicObisIdentifier');
+
+		MqttSettings.topicIdentifierInvalidCharsRegex = config.get('mqtt.topicIdentifierInvalidCharsRegex');
+		MqttSettings.topicIdentifierInvalidCharsReplacement = config.get('mqtt.topicIdentifierInvalidCharsReplacement');
+		MqttSettings.topicIdentifierReplaceUmlauts = config.get('mqtt.topicIdentifierReplaceUmlauts');
+
+		MqttSettings.publishSingleJson = config.get('mqtt.publishSingleJson');
+		MqttSettings.publishIndividualValues = config.get('mqtt.publishIndividualValues');
+		MqttSettings.includeUnitInIndividualValues = config.get('mqtt.includeUnitInIndividualValues');
+		MqttSettings.valueDateTimeFormat = config.get('mqtt.valueDateTimeFormat');
+
+		MqttSettings.minSecondsBetweenMessages = config.get('mqtt.minSecondsBetweenMessages');
+		MqttSettings.publishIntervalSeconds = MqttSettings.stringToNumberArray(config.get('mqtt.publishIntervalSeconds'), 'mqtt.publishIntervalSeconds');
+		MqttSettings.publishIntervalMinutes = MqttSettings.stringToNumberArray(config.get('mqtt.publishIntervalMinutes'), 'mqtt.publishIntervalMinutes');
+
+	}
+
+	private static stringToNumberArray(numberString: string, source: string): number[] {
+		if(!numberString) return [];
+		const numberStringNoWs = numberString.replace(/\s/g, '');
+		if(!numberStringNoWs) return [];
+		const arr = numberStringNoWs.split(',')?.map((n) => +n) ?? [];
+		if(arr.join(',') != numberStringNoWs) {
+			console.error(`Invalid value for setting "${source}". Must be comma separated string. Value: "${numberString}". Interpreted as: "${arr.join(', ')}". Ignored!`);
+			return [];
+		}
+		return arr;
 	}
 }
 
@@ -85,12 +161,14 @@ export class Settings {
 	public static serialPort = SerialPortSettings;
 	public static decryption = DecryptionSettings;
 	public static decoding = DecodingSettings;
+	public static mqtt = MqttSettings;
 	public static debug = DebugSettings;
 
 	public static read() {
 		SerialPortSettings.read();
 		DecryptionSettings.read();
 		DecodingSettings.read();
+		MqttSettings.read();
 		DebugSettings.read();
 	}
 }

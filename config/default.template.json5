@@ -1,23 +1,84 @@
 {
 	serialPort: {
-		//port: '/dev/ttyUSB0'
+		//port: "/dev/ttyUSB0"
 		port: "/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_DIDSt114J20-if00-port0",
 		baudRate: 2400,
 		dataBits: 8,			// 5 | 6 | 7 | 8
-		parity: 'none',			// 'none' | 'even' | 'odd' = 'none',
+		parity: "none",			// "none" | "even" | "odd" = "none",
 		stopBits: 1				// 1 | 1.5 | 2 = 1,
 	},
 
 	decryption: {
-		key: "decryption key from your service provider!",
+		// decryption key from your service provider!
+		key: "abc",
 	},
 
 	decoding: {
-		obisLanguage: 'de'      // 'de' | 'end
+		obisLanguage: "de",                 // "de" | "end
+		// Format of the name field. Placeholders are:
+		// [medium], [channel], [measurement], [measurementType], [tariff], [previousMeasurement]
+		// e.g. "[measurement], [measurementType]" -> "L1 voltage, Instantaneous value"
+		obisNameFormat: "[measurement]",
+		// If names for placeholders are missing, delimiter characters could occur multiple times
+		// or at the end. Those are removed
+		obisNameDelimiterCharacters: ",- "
 	},
 
 	mqtt: {
+		enabled: true,
+		testMode: false,                         // if true: do not publish but log what would have been published
+		host: "192.168.1.10",
+		port: 1893,                             // Standard port for MQTT is 1883 (not encrypted)
+		clientId: "SmartMeterElectricity01",
+		username: "",
+		password: "",
 
+		topicBase: "SmartMeter/Electricity/Main/",
+		// Whether to use obis code or obis names as Topic-Names
+		// Values: 'name', 'code'.
+		topicObisIdentifier: 'name',
+		// regex of chars which are not allowed as identifier
+		// for ioBroker you can set this to '[\.]'
+		topicIdentifierInvalidCharsRegex: '[^a-zA-z0-9\-_]',
+		topicIdentifierInvalidCharsReplacement: '',     //
+		topicIdentifierReplaceUmlauts: true,
+
+		// If the individual values are published individually the values cannot be published
+		// at the exact same time. This could become an issue if you subscribe to one value and
+		// read another one. The datetime is written last - so if you want to read multiple values
+		// make sure to subscribe to the datetime value. This does not apply if you read only
+		// one value. E.g. total energy usage.
+		// If you process the values anyway it may be advisable to just publish a single JSON and
+		// work with that. Then it's 100% guaranteed that all values come from the same smart meter
+		// message with the same timestamp.
+		publishSingleJson: true,
+		publishIndividualValues: true,
+		includeUnitInIndividualValues: false,
+		// date time format:
+		// 'epoch':                     1669493190000
+		// 'iso':   (UTC)               2022-11-26T20:07:05.000Z
+		// 'js':                        Sat Nov 26 2022 21:08:25 GMT+0100 (Central European Standard Time)
+		// 'iso-local'                  2022-11-26 21:09:25
+		valueDateTimeFormat: 'iso-local',
+
+		// FYI: "publish" is the MQTT term used for sending a message to the MQTT broker.
+
+		// Minimal time between messages published to the MQTT broker.
+		// Usually the smart meter sends data every 5 seconds. If you only want a new
+		// value every 15 seconds it is advised to set this to e.g. 13. Because the
+		// elapsed time between two smart meter messages is surely not exactly a multiple of 5
+		// seconds but either slightly less or slightly more.
+		minSecondsBetweenMessages: 0,
+
+		// Messages will only be published at these seconds/minutes (or shortly after)
+		// e.g. "0, 15, 30, 45" for publishPeriodSeconds says that a message is published
+		// every 15 seconds. If a message arrives at 09:00:00 it is published. The messages from the
+		// smart meter at 09:00:05 and 09:00:10 are omitted. The message at 09:00:15 is published again.
+		// If data from the smart meter arrives shortly after 0/15/30/45 seconds it is still published.
+		// Use "0" for publishPeriodSeconds to publish the data every minute at hh:mm:00 (or shortly after).
+		// Leave empty to publish every smart meter message.
+		publishIntervalSeconds: "0, 15, 30, 45",
+		publishIntervalMinutes: ""
 	},
 
 	debug: {
@@ -43,8 +104,7 @@
 		logApduCosemXml: false,              // simple XML similar to other PDU->XML translators
 
 		logObisValuesJson: false,            // custom format with decoded and readable values
-		logObisValuesPlain: true,           // obis values
+		logObisValuesPlain: false,           // obis values
 	}
 }
-
 

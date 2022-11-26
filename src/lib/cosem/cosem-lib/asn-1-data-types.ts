@@ -177,10 +177,18 @@ export class Asn1DataType {
 		return {
 			date,
 			epoch,
-			asString: date.toLocaleString('sv'),  // JS still sucks at time formatting. Workaround with Swedish time format to get somewhat ISO with local time zone.
+			//asString: date.toLocaleString('sv'),  // JS still sucks at time formatting. Workaround with Swedish time format to get somewhat ISO with local time zone.
+			asString: this.dateToLocalIso(date),
 			deviation,
 			clockStatus,
 		};
+	}
+
+	private dateToLocalIso(date: Date) {
+		const offset = date.getTimezoneOffset();
+		let isoString = new Date(date.getTime() - offset * 60 * 1000).toISOString().substring(0, 23);
+		isoString = `${isoString.substring(0, 10)} ${isoString.substring(11, 19)}`;
+		return isoString;
 	}
 
 	private getClockStatus(clockStatusRaw: number): ClockStatus {
