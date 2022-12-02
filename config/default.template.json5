@@ -14,34 +14,37 @@
 	},
 
 	decoding: {
-		obisLanguage: "de",                 // "de" | "end
+		obisLanguage: "de",                 // "de" | "en"
 		// Format of the name field. Placeholders are:
 		// [medium], [channel], [measurement], [measurementType], [tariff], [previousMeasurement]
 		// e.g. "[measurement], [measurementType]" -> "L1 voltage, Instantaneous value"
-		obisNameFormat: "[measurement]",
+		// Note: current energy (W) and total energy (Wh) have the same [measurement].
+		// For "de" I have overwritten these values. ("Momentanleistung", "Summe Wirkenergie"). But not for "en".
+		// So for "de" you can also use "[measurement]". For "en" I'd recommend "[measurement], [measurementType]".
+		obisNameFormat: "[measurement], [measurementType]",
 		// If names for placeholders are missing, delimiter characters could occur multiple times
 		// or at the end. Those are removed
 		obisNameDelimiterCharacters: ",- "
 	},
 
 	mqtt: {
-		enabled: true,
-		testMode: false,                         // if true: do not publish but log what would have been published
+		enabled: false,
+		testMode: false,                        // if true: do not publish but log what would have been published
 		host: "192.168.1.10",
 		port: 1883,                             // Standard port for MQTT is 1883 (not encrypted)
-		clientId: "SmartMeterElectricity01",
+		clientId: "SmartMeterElectricity01",    // any name. But should be unique in your MQTT setup.
 		username: "",
 		password: "",
 
 		topicBase: "SmartMeter/Electricity/Main/",
-		// Whether to use obis code or obis names as Topic-Names
+		// Whether to use obis code or obis names as mqtt topic names
 		// Values: 'name', 'code'.
 		topicObisIdentifier: 'name',
 		// regex of chars which are not allowed as identifier
-		// for ioBroker you can set this to '[\.]'
-		topicIdentifierInvalidCharsRegex: '[^a-zA-z0-9\-_]',
-		topicIdentifierInvalidCharsReplacement: '',     //
-		topicIdentifierReplaceUmlauts: true,
+		// for ioBroker you could also set this to '[\.]' if you don't care about special characters in ioBroker ids
+		topicIdentifierInvalidCharsRegex: '[^a-zA-z0-9_]',
+		topicIdentifierInvalidCharsReplacement: '',     // set to '' if they should just be omitted or e.g. to '_'
+		topicIdentifierReplaceUmlauts: true,            // ä -> ae, Ä-> Ae, etc.
 
 		// If the individual values are published individually the values cannot be published
 		// at the exact same time. This could become an issue if you subscribe to one value and
@@ -53,7 +56,7 @@
 		// message with the same timestamp.
 		publishSingleJson: true,
 		publishIndividualValues: true,
-		includeUnitInIndividualValues: false,
+		includeUnitInIndividualValues: false,            // if true e.g. "230.5 V" instead of "230.5"
 		// date time format:
 		// 'epoch':                     1669493190000
 		// 'iso':   (UTC)               2022-11-26T20:07:05.000Z
@@ -83,9 +86,9 @@
 
 	debug: {
 		// stop after this many if > 0
-		maxBytes: 0,
-		maxTelegrams: 0,
-		maxApplicationDataUnits: 0,     // APDU, application protocol data unit
+		maxBytes: 0,                    // from serial port
+		maxTelegrams: 0,                // depending on your smart meter one APDU consists of 1 or 2 telegrams
+		maxApplicationDataUnits: 1,     // APDU, application protocol data unit
 
 		logSerialPort: false,
 		logSerialPortMinBytes: 60,      // log only after this number of bytes in queue
@@ -97,14 +100,15 @@
 		logApduRaw: false,
 		logApduJson: false,
 
-		logApduEncryptedRaw: false,          // hex string
-		logApduDecryptedRaw: false,          // hex string
+		logApduEncryptedRaw: false,      // hex string
+		logApduDecryptedRaw: false,      // hex string
 
-		logApduCosemJson: false,              // based on ASN.1 format, deeply nested
-		logApduCosemXml: false,              // simple XML similar to other PDU->XML translators
+		logApduCosemJson: false,         // based on ASN.1 format, deeply nested
+		logApduCosemXml: false,          // simple XML similar to other PDU->XML translators
 
-		logObisValuesJson: false,            // custom format with decoded and readable values
-		logObisValuesPlain: false,           // obis values
+		// log extracted obis values
+		logObisValuesJson: false,        // custom format with decoded and readable values
+		logObisValuesPlain: true,        // obis values
 	}
 }
 

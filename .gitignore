@@ -3,3 +3,4 @@
 /node_modules/
 
 /config/default.json5
+/release/
