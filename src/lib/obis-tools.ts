@@ -128,6 +128,15 @@ export class ObisTools {
 			if(code == '0-0:1.0.0*255') return this.getObisMeasurementNames('Abstrakt', 'Zeitpunkt');
 			if(code == '0-0:96.1.0*255') return this.getObisMeasurementNames('Abstrakt', "Zählernummer");
 			if(code == '0-0:42.0.0*255') return this.getObisMeasurementNames('Abstrakt', 'Cosem logischer Gerätename');
+
+			// for some reason power (Leistung) and energy (Energie, Arbeit) have the same measurement types (1, 2)
+			if(code == '1-0:1.7.0*255') return this.getObisMeasurementNames('Strom', 'Momentanleistung Bezug +P');
+			if(code == '1-0:2.7.0*255') return this.getObisMeasurementNames('Strom', 'Momentanleistung Lieferung -P');
+			if(code == '1-0:1.8.0*255') return this.getObisMeasurementNames('Strom', 'Summe Wirkenergie Bezug +A');
+			if(code == '1-0:2.8.0*255') return this.getObisMeasurementNames('Strom', 'Summe Wirkenergie Lieferung -A');
+			if(code == '1-0:3.8.0*255') return this.getObisMeasurementNames('Strom', 'Summe Blindenergie Bezug +R');
+			if(code == '1-0:4.8.0*255') return this.getObisMeasurementNames('Strom', 'Summe Blindenergie Lieferung -R');
+
 		} else {
 			if(code == '0-0:1.0.0*255') return this.getObisMeasurementNames('Abstrakt', 'Timestamp');
 			if(code == '0-0:96.1.0*255') return this.getObisMeasurementNames('Abstrakt', 'Smart meter number');

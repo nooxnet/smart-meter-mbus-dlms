@@ -28,7 +28,7 @@
 		enabled: true,
 		testMode: false,                         // if true: do not publish but log what would have been published
 		host: "192.168.1.10",
-		port: 1893,                             // Standard port for MQTT is 1883 (not encrypted)
+		port: 1883,                             // Standard port for MQTT is 1883 (not encrypted)
 		clientId: "SmartMeterElectricity01",
 		username: "",
 		password: "",

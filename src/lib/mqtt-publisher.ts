@@ -97,7 +97,7 @@ export class MqttPublisher {
 
 		if(MqttSettings.publishSingleJson) {
 			jsonValues.push({
-				name: 'invokeId',
+				name: 'InvokeId',
 				value: dataNotification.longInvokeIdAndPriority.dec.toString()
 			});
 
