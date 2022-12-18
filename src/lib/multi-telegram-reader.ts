@@ -36,27 +36,27 @@ export class MultiTelegramReader {
 	public addTelegrams(newTelegrams: Telegram[]): ApplicationDataState {
 		for (const newTelegram of newTelegrams) {
 			if (newTelegram.sequenceNumber != this.currentSequenceNumber) {
-				console.log(`addTelegrams: Sequence number does not match. Start over. Expected: ${this.currentSequenceNumber}. Received: ${newTelegram.sequenceNumber}`);
+				console.log(`MultiTelegramReader.addTelegrams: Sequence number does not match. Start over. Expected: ${this.currentSequenceNumber}. Received: ${newTelegram.sequenceNumber}`);
 				this.resetSearch();
 				continue;
 			}
 
 			if(!newTelegram.applicationData) {
-				console.warn(`addTelegrams: Application data not set.`);
+				console.warn(`MultiTelegramReader.addTelegrams: Application data not set.`);
 				this.resetSearch();
 				continue;
 			}
 
 			if (newTelegram.sequenceNumber === 0) {
 				if (newTelegram.applicationData.length < 17) {
-					console.warn(`addTelegrams: Application data length of first telegram in sequence invalid. Start over. Expected: >= 17. Received: ${newTelegram.applicationData.length}`);
+					console.warn(`MultiTelegramReader.addTelegrams: Application data length of first telegram in sequence invalid. Start over. Expected: >= 17. Received: ${newTelegram.applicationData.length}`);
 					this.resetSearch();
 					continue;
 				}
 
 				this.currentApplicationDataUnit.cypheringService = newTelegram.applicationData[0];
 				if (this.currentApplicationDataUnit.cypheringService != MultiTelegramReader.cypheringServiceGeneralGloCiphering) {
-					console.warn(`addTelegrams: Application data cyphering service invalid. Start over. Expected: ${MultiTelegramReader.cypheringServiceGeneralGloCiphering.toString(16)}. Received: ${this.currentApplicationDataUnit.cypheringService.toString(16)}`);
+					console.warn(`MultiTelegramReader.addTelegrams: Application data cyphering service invalid. Start over. Expected: ${MultiTelegramReader.cypheringServiceGeneralGloCiphering.toString(16)}. Received: ${this.currentApplicationDataUnit.cypheringService.toString(16)}`);
 					this.resetSearch();
 					continue;
 				}
@@ -65,6 +65,11 @@ export class MultiTelegramReader {
 
 				// length field has either 1 byte (length <= 127) or 3 bytes
 				const lengthFieldLength = this.currentApplicationDataUnit.setLength(newTelegram.applicationData,10, 13);
+				if (lengthFieldLength == 0) {
+					console.warn('MultiTelegramReader.addTelegrams: Invalid length field length. Start over.');
+					this.resetSearch();
+					continue;
+				}
 				const offset = lengthFieldLength - 1;
 
 				this.currentApplicationDataUnit.securityControl = newTelegram.applicationData[11 + offset];

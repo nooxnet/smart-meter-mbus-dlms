@@ -1,6 +1,7 @@
-# smart-meter-mdbus-dlms 
+# smart-meter-mbus-dlms 
 
 This tool can be used to read out the energy meter Kaifa MA309M as used by some Austrian electricity provider.
+The data is read out via the M-Bus customer interface of the smart meter.
 It can transfer the data via MQTT e.g. to your smart home hub. 
 The tool is written in TypeScript and the generated Javascript file runs within NodeJS.
 I use it to read the data of my smart meter from Salzburg Netz (Salzburg AG). But it should also work with the 
@@ -22,15 +23,15 @@ See "Logging and Debugging" below if you have troubles reading your smart meter.
 
 ## Prerequisites
 
-You need a USB to MBus adapter and a device (e.g. mini computer) where you can plug in the adapter and run the 
-script with Node. I bought my adapter (ZTSHBK USB-zu-MBUS-Slave-Modul Master-Slave) at amazon.de,
+You need a USB to M-Bus adapter and a device (e.g. a SBC - single board computer) where you can plug in the adapter and run the 
+script with Node. I bought my adapter (ZTSHBK USB-zu-M-BUS-Slave-Modul Master-Slave) at amazon.de,
 but it's currently not available there. It seems like the same product is available on eBay from 
 China or directly from e.g. Aliexpress.
 
-I use a Raspberry PI 3 where I plugged in the MBus Adapter and run the script.
+I use a Raspberry PI 3 where I plugged in the M-Bus Adapter and run the script.
 
 You need a RJ12 or RJ11 plug to plug into the customer interface (Kundenschnittstelle) of the smart meter. 
-Connect the center two wires to the MBus adapter. Your electricity provider should provide a document about the 
+Connect the center two wires to the M-Bus adapter. Your electricity provider should provide a document about the 
 customer interface with more details.
 
 To read out the data you need a decryption key. I could download it from the online portal of the smart meter
@@ -44,7 +45,7 @@ where you can store the data in a database and create some visualizations.
 
 ### NodeJS & NPM
 
-First you need to install node and npm on your system. I used a Raspberry Pi 3. Search the web for details 
+First you need to install node and npm on your system. I use a Raspberry Pi 3. Search the web for details 
 for your system.
 
 ### Download Script
@@ -56,10 +57,11 @@ Download the latest release archive "smart-meter-mbus-dlms.vx.y.z.tar.gz" from t
 You can use wget or curl. 
 You can also download it to your Windows system and use WinSCP to transfer it.
 
-Alternatively you can download the file smart-meter-mbus-dlms.js and config/default.template.json5 form the 
-sources, but you have to rename default.template.json5 to default.json5.
+Alternatively you can download the files smart-meter-mbus-dlms.js and config/default.template.json5 form the 
+sources, but you have to rename default.template.json5 to default.json5. The config file must be in the 
+config/ directory.
 
-Unpack the files:
+Unpack the files (replace the version numbers):
 
 `tar -xzf smart-meter-mbus-dlms.vx.y.z.tar.gz`
 
@@ -67,9 +69,9 @@ Switch to the script directory:
 
 `cd smart-meter-mbus-dlms`
 
-### Configure script
+### Configure Script
 
-First you have to determine the USB-Port where your MBus USB adapter ist connected to.
+First you have to determine the USB-Port where your M-Bus USB adapter ist connected to.
 
 List USB ports:
 
@@ -79,7 +81,7 @@ List USB devices:
 
 `ls -l /dev/ttyUSB*`
 
-List USB by id or path:
+List USB devices by id or path:
 
 `ls -l /dev/serial/by-id/*`
 
@@ -129,8 +131,8 @@ desired logging to true.
 When you have problems with the script you can use these logging outputs to post in a GitHub issue. 
 I have tests where I can analyze these logging outputs.
 
-You can also use the tools from [Gurux](https://www.gurux.fi/) (e.g. GuruX DLMS Director for .NET) to analyze those logging
-outputs.
+You can also use the tools from [Gurux](https://www.gurux.fi/) (e.g. GuruX DLMS Director for .NET) 
+to analyze those logging outputs.
 
 ## MQTT
 
@@ -146,13 +148,13 @@ Before you create a service I'd suggest to disable all logging. So in the "debug
 config file set everything to false. Also note that "maxBytes", "maxTelegrams" and "maxApplicationDataUnits"
 must all be set to 0. Else the script would stop prematurely.
 
-To create a service I followed those links:
+To create a service I followed the steps from here:
 - https://natancabral.medium.com/run-node-js-service-with-systemd-on-linux-42cfdf0ad7b2
 - https://stackoverflow.com/questions/4018154/how-do-i-run-a-node-js-app-as-a-background-service/29042953#29042953
 
 `cd /etc/systemd/system/`
 
-Check your node location
+Check your node location (see ExecStart= in the script below)
 
 `whereis node`
 
@@ -216,3 +218,55 @@ If you make any config changes, restart the service:
 `sudo systemctl restart smartmeter.service`
 
 ## Implementation details
+
+There are quite some standards and protocols involved to read out the data of these smart meters. 
+I found implementations in Python, C, .NET, Java etc. but I found none in NodeJS/JavaScript.
+
+As I use ioBroker as my smart home hub with a lot of NodeJS scripts I wanted to stay there - maybe parts
+of the script can be integrated into ioBroker in the future.
+
+### Reading the M-Bus Telegrams and APDUs.
+
+Reading the APDU (Application Protocol Data Units) from the raw serial port data is very well documented
+in the documentation of the electricity providers.
+
+For the data link layer I use the `telegram-reader` class to get single M-Bus telegrams. The data for a 
+single APDU may be split up in multiple M-Bus telegrams. The smart meters mentioned above usually use two
+M-Bus telegrams for one APDU. So on the transport layer level I use the `multi-telegram-reader` class to
+read the APDUs. Some parts of the encrypted DLMS/COSEM data is already read here
+
+### Decrypting the encrypted APDU Payload
+
+Although the "Salzburg Netz" documentation says that the encryption is "AES128-CBC" it's most likely
+"AES-GCM". "AES-CBC" does not work and the documentation of the other electricity providers state "AES-GCM".
+
+"AES-GCM" usually uses an auth-tag. But The smart meters do not use an auth tag when encrypting the message.
+I saw code where a 12 byte auth tag with all "0x00" is used. But some libraries (like crypto from NodeJS)
+do not accept this. Actually it does decrypt the message, but fails at the call of `final()` where it does some
+additional checking if the message is valid. 
+
+In a discussion about the same problem with a Java library I read that "AES-GCM" without auth tag is basically
+"AES-CTR". With a slightly modified IV (initialization vector) the message can be decrypted using "AES-CTR".
+
+### Reading the ASN.1 APDU
+
+ASN.1 is a data type declaration notation. It describes the hierarchical structure of the APDU payload
+with various data types. There are encoding rules which define how a data type is encoded as series of bytes.
+
+The DLMS User Association Website provides the ASN.1 definition for DLMS/COSEM (`COSEMpdu_GB83.asn`). There
+are also some excerpts of the documentations~~~~ available for free. Full documentations are not freely available.
+
+I chose a more general approach to read the ASN.1 APDU payload. I wrote a tool which transfers the ASN.1
+definition file into TypeScript objects.
+
+I then use these objects to read the APDU (see `cosem-data-reader.ts`). The DLMS/COSEM ASN.1 definitions are very broad and support
+a lot more data types than the smart meter uses to encode the data. So I have mostly only implemented 
+those data types and encoding variants which are actually used by the smart meter. 
+
+### Extracting the OBIS values
+
+As already mentioned the DLMS/COSEM definition is very broad. So I extract the relevant OBIS values hard coded
+from the DLMS/COSEM result (see `cosem-obis-data-processor.ts`). I use a simpler format (less nesting) as
+the resulting JSON object. But a debug log is available which produces pretty much the same XML result
+as other tools (like Gurux) do.
+

@@ -20,7 +20,7 @@ describe('Telegram reader other example data', () => {
 		expect(multiTelegramReader.addRawData(buffer)).toBe(ApplicationDataState.available);
 		expect(multiTelegramReader["applicationDataUnits"].length).toBe(1);
 		expect(multiTelegramReader["applicationDataUnits"][0].lengthFieldLength).toBe(3);
-		expect(multiTelegramReader["applicationDataUnits"][0].lengthField).toBe(Tools.getNumberFromByteArray([0x01, 0x55]));
+		expect(multiTelegramReader["applicationDataUnits"][0].lengthField).toBe(Tools.getNumberFromByteArray([0x01, 0x55])); // 19. byte == 0x82 -> length in 20. and 21. byte
 		expect(multiTelegramReader["applicationDataUnits"][0].encryptedPayload.length).toBe(multiTelegramReader["applicationDataUnits"][0].lengthEncryptedPayload);
 	});
 
@@ -30,7 +30,18 @@ describe('Telegram reader other example data', () => {
 		expect(multiTelegramReader.addRawData(buffer)).toBe(TelegramState.available);
 		expect(multiTelegramReader["applicationDataUnits"].length).toBe(1);
 		expect(multiTelegramReader["applicationDataUnits"][0].lengthFieldLength).toBe(1);
-		expect(multiTelegramReader["applicationDataUnits"][0].lengthField).toBe(0x4D);
+		expect(multiTelegramReader["applicationDataUnits"][0].lengthField).toBe(0x4D); // 19. byte < 127 -> = length
 		expect(multiTelegramReader["applicationDataUnits"][0].encryptedPayload.length).toBe(multiTelegramReader["applicationDataUnits"][0].lengthEncryptedPayload);
+	});
+
+	test('Sample from NOE Netz EVN documentation', () => {
+		const data = Tools.getByteArrayFromHexString('68FAFA6853FF000167DB084B464D675000000981F8200000002388D5AB4F97515AAFC6B88D2F85DAA7A0E3C0C40D004535C397C9D037AB7DBDA329107615444894A1A0DD7E85F02D496CECD3FF46AF5FB3C9229CFE8F3EE4606AB2E1F409F36AAD2E50900A4396FC6C2E083F373233A69616950758BFC7D63A9E9B6E99E21B2CBC2B934772CA51FD4D69830711CAB1F8CFF25F0A329337CBA51904F0CAED88D61968743C8454BA922EB00038182C22FE316D16F2A9F544D6F75D51A4E92A1C4EF8AB19A2B7FEAA32D0726C0ED80229AE6C0F7621A4209251ACE2B2BC66FF0327A653BB686C756BE033C7A281F1D2A7E1FA31C3983E15F8FD16CC5787E6F517166814146853FF110167419A3CFDA44BE438C96F0E38BF83D98316');
+		const buffer = Buffer.from(data);
+		expect(multiTelegramReader.addRawData(buffer)).toBe(TelegramState.available);
+		expect(multiTelegramReader["applicationDataUnits"].length).toBe(1);
+		expect(multiTelegramReader["applicationDataUnits"][0].lengthFieldLength).toBe(2);
+		expect(multiTelegramReader["applicationDataUnits"][0].lengthField).toBe(0xF8);  // 19. byte == 0x81 -> length in 20. byte
+		expect(multiTelegramReader["applicationDataUnits"][0].encryptedPayload.length).toBe(multiTelegramReader["applicationDataUnits"][0].lengthEncryptedPayload);
+		//console.log(multiTelegramReader["applicationDataUnits"][0].encryptedPayload.toString('hex'));
 	});
 });

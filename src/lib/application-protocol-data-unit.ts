@@ -61,12 +61,18 @@ export class ApplicationProtocolDataUnit {
 	public setLength(buffer: Buffer, start = 0, end?: number): number {
 		if(end == undefined) end = buffer.length;
 		// length of length field is variable: 1 or 3 bytes long
-		if(buffer[start] == 0x82) {     // 130
-			this._lengthField = Tools.getNumberFromBuffer(buffer, start + 1, end);
-			this._lengthFieldLength = 3;
-		} else {
+		if(buffer[start] < 0x80) {      // <= 127
 			this._lengthField = buffer[start];
 			this._lengthFieldLength = 1;
+		} else if(buffer[start] == 0x82) {     // 130
+			this._lengthField = Tools.getNumberFromBuffer(buffer, start + 1, end);
+			this._lengthFieldLength = 3;
+		} else if(buffer[start] == 0x81) {     // 129
+			// 0x81 not documented but most likely:
+			this._lengthField = buffer.readUint8(start + 1);
+			this._lengthFieldLength = 2;
+		} else {
+			console.error(`Invalid APDU length. First length field: ${buffer[start]}. Should be <= 0x7F (127) or 0x81 or 0x82`);
 		}
 		this._lengthEncryptedPayload = this._lengthField - 5;
 		this._lengthTotal = this._lengthField + this._lengthFieldLength + 10;

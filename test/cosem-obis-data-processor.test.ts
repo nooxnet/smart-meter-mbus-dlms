@@ -7,7 +7,7 @@ import { Result } from "../src/lib/cosem/cosem-lib/asn-1-data-types";
 let cosemAsn1Result: Result;
 let cosemObisDataProcessor: CosemObisDataProcessor;
 
-describe('CosemDataReader', () => {
+describe('COSEM OBIS Data Processor', () => {
 
 	beforeEach(() => {
 		const cosemDataReader = new CosemDataReader(cosemTypeDefinitionMap, 'XDLMS-APDU');
@@ -16,7 +16,7 @@ describe('CosemDataReader', () => {
 		cosemAsn1Result = cosemDataReader.read(buffer) ?? new Result({});
 	});
 
-	test('test APDU', () => {
+	test('COSEM APDU', () => {
 		expect(cosemObisDataProcessor.transform(cosemAsn1Result)).toBeDefined();
 	});
 });

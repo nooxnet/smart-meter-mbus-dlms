@@ -75,7 +75,7 @@ describe('Telegram reader other example data', () => {
 		expect(telegramReader["possibleStartFound"]).toBeFalsy();
 	});
 
-	test('Other KAIFA MA309M https://www.gurux.fi/node/18232 21st', () => {
+	test('Other KAIFA MA309M https://www.gurux.fi/node/18232 2nd', () => {
 		const data = Tools.getByteArrayFromHexString('68 72 72 68 53 FF 11 01 67 75 D9 10 4A 5C 1E 37 43 71 08 B3 E0 F5 DF DE 22 6D BF 09 73 F8 22 04 5F 15 3E 53 83 D4 8D 87 6B 81 CF 12 73 CD 59 EC 0E F4 80 20 A1 88 B5 05 F3 D8 78 EF 28 43 D7 B1 84 1F 95 DF 8B 2F 42 01 4C 25 D7 13 97 E3 A6 B6 05 53 2E 91 EC CA 11 BB D3 FD A2 4A 77 D0 54 7B DF B4 70 A3 51 46 0A FB 96 00 2E DB 59 C0 1D 25 FB D5 9A 15 EE 42 14 16');
 		const buffer = Buffer.from(data);
 		expect(telegramReader.addRawData(buffer)).toBe(TelegramState.available);

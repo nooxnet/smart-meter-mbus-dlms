@@ -16,13 +16,13 @@ export class ApplicationDataDecrypter {
 		// The documentation says that the smart meter uses 'aes-128-gcm'. But it seems to be without authTag.
 		// Node crypto gets the encrypted data on "update" if a 12 byte authTag with all "00" is used,
 		// but it fails on "final()".
-		//let authTagLength = 12;
-		//const authTag = Buffer.alloc(authTagLength);
-		//authTag.fill(0);
-		//let decipher = crypto.createDecipheriv('aes-128-gcm', key, iv, { authTagLength });
-		//decipher.setAuthTag(authTag);
+		// const authTagLength = 12;
+		// const authTag = Buffer.alloc(authTagLength);
+		// authTag.fill(0);
+		// const decipher = crypto.createDecipheriv('aes-128-gcm', key, iv, { authTagLength });
+		// decipher.setAuthTag(authTag);
 
-		// workaround: use 'aes-128-ctr' with additional 4 bytes of iv like so:
+		//workaround: use 'aes-128-ctr' with additional 4 bytes of iv like so:
 		const ctrIv = Buffer.concat([iv, Buffer.from("00000002", 'hex')]);
 		const decipher = crypto.createDecipheriv('aes-128-ctr', key, ctrIv);
 
