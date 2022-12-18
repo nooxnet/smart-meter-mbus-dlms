@@ -230,17 +230,17 @@ of the script can be integrated into ioBroker in the future.
 Reading the APDU (Application Protocol Data Units) from the raw serial port data is very well documented
 in the documentation of the electricity providers.
 
-For the data link layer I use the `telegram-reader` class to get single M-Bus telegrams. The data for a 
+For the data link layer I use the `TelegramReader` class to get single M-Bus telegrams. The data for a 
 single APDU may be split up in multiple M-Bus telegrams. The smart meters mentioned above usually use two
-M-Bus telegrams for one APDU. So on the transport layer level I use the `multi-telegram-reader` class to
-read the APDUs. Some parts of the encrypted DLMS/COSEM data is already read here
+M-Bus telegrams for one APDU. So on the transport layer level I use the `MultiTelegramReader` class to
+read the APDUs. Some parts of the encrypted DLMS/COSEM data is already read here.
 
 ### Decrypting the encrypted APDU Payload
 
 Although the "Salzburg Netz" documentation says that the encryption is "AES128-CBC" it's most likely
 "AES-GCM". "AES-CBC" does not work and the documentation of the other electricity providers state "AES-GCM".
 
-"AES-GCM" usually uses an auth-tag. But The smart meters do not use an auth tag when encrypting the message.
+"AES-GCM" usually uses an auth tag. But the smart meters do not use an auth tag when encrypting the message.
 I saw code where a 12 byte auth tag with all "0x00" is used. But some libraries (like crypto from NodeJS)
 do not accept this. Actually it does decrypt the message, but fails at the call of `final()` where it does some
 additional checking if the message is valid. 
@@ -253,20 +253,20 @@ In a discussion about the same problem with a Java library I read that "AES-GCM"
 ASN.1 is a data type declaration notation. It describes the hierarchical structure of the APDU payload
 with various data types. There are encoding rules which define how a data type is encoded as series of bytes.
 
-The DLMS User Association Website provides the ASN.1 definition for DLMS/COSEM (`COSEMpdu_GB83.asn`). There
-are also some excerpts of the documentations~~~~ available for free. Full documentations are not freely available.
+The DLMS User Association website provides the ASN.1 definition for DLMS/COSEM (`COSEMpdu_GB83.asn`). There
+are also some excerpts of the documentations available for free. Full documentations are not freely available.
 
-I chose a more general approach to read the ASN.1 APDU payload. I wrote a tool which transfers the ASN.1
+I chose a more general approach to read the ASN.1 APDU payload. I wrote a tool which transcribes the ASN.1
 definition file into TypeScript objects.
 
-I then use these objects to read the APDU (see `cosem-data-reader.ts`). The DLMS/COSEM ASN.1 definitions are very broad and support
-a lot more data types than the smart meter uses to encode the data. So I have mostly only implemented 
-those data types and encoding variants which are actually used by the smart meter. 
+I then use these objects to read the APDU (see `cosem-data-reader.ts`). The DLMS/COSEM ASN.1 definitions are
+very broad and support a lot more data types than the smart meter uses to encode the data. So I have mostly 
+only implemented those data types and encoding variants which are actually used by the smart meter. 
 
 ### Extracting the OBIS values
 
 As already mentioned the DLMS/COSEM definition is very broad. So I extract the relevant OBIS values hard coded
-from the DLMS/COSEM result (see `cosem-obis-data-processor.ts`). I use a simpler format (less nesting) as
-the resulting JSON object. But a debug log is available which produces pretty much the same XML result
+from the DLMS/COSEM result (see `cosem-obis-data-processor.ts`). I write the data into a simpler (less nested) 
+JSON object. But a debug log is available which produces pretty much the same XML result
 as other tools (like Gurux) do.
 
