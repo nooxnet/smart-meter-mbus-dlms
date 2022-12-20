@@ -3,7 +3,7 @@
 This tool can be used to read out the energy meter Kaifa MA309M as used by some Austrian electricity provider.
 The data is read out via the M-Bus customer interface of the smart meter.
 It can transfer the data via MQTT e.g. to your smart home hub. 
-The tool is written in TypeScript and the generated Javascript file runs within NodeJS.
+The tool is written in TypeScript and the generated JavaScript file runs within NodeJS.
 I use it to read the data of my smart meter from Salzburg Netz (Salzburg AG). But it should also work with the 
 following smart meters.
 
@@ -48,7 +48,7 @@ where you can store the data in a database and create some visualizations.
 First you need to install node and npm on your system. I use a Raspberry Pi 3. Search the web for details 
 for your system.
 
-### Download Script
+### Download script
 
 I just installed it in the users home directory of my RaspberryPi.
 
@@ -72,7 +72,7 @@ Switch to the script directory:
 
 `cd smart-meter-mbus-dlms`
 
-### Configure Script
+### Configure script
 
 First you have to determine the USB-Port where your M-Bus USB adapter ist connected to.
 
@@ -104,7 +104,7 @@ You can go through the rest of the config file. In the initial configuration MQT
 only the first APDU (application protocol data unit) is read. So one data package. Then the script stops. 
 The OBIS values are logged to the console. This is ideal for initial testing.
 
-### Install missing Node Modules
+### Install missing node modules
 
 You need the following node modules. Most likely they are not yet installed on your system. 
 
@@ -113,16 +113,16 @@ You need the following node modules. Most likely they are not yet installed on y
 - `npm i smartmeter-obis` 
 - `npm i mqtt`
 
-## Execute Script  
+## Execute script  
 
 `node smart-meter-mbus-dlms.js`
 
 If everything went fine, and you see a list of the OBIS values you can go on to configure MQTT.
-If you start the script just when the smart meter sends data the data might be incomplete.
+If you start the script just when the smart meter is sending data the data might be incomplete.
 A warning message might appear. This is no problem. The script waits until the next data
 arrives and reads the next complete data package.
 
-## Logging and Debugging
+## Logging and debugging
 
 There are quite some standards and layers involved to extract the OBIS values from the raw data.
 For each layer logging is available. 
@@ -145,7 +145,7 @@ yet to the MQTT broker, but you can see what would have been published.
 
 You can then play around with the MQTT settings. If everything is fine disable "testMode".
 
-## Create a Service for the Script
+## Create a service for the script
 
 Before you create a service I'd suggest to disable all logging. So in the "debug" section of the 
 config file set everything to false. Also note that "maxBytes", "maxTelegrams" and "maxApplicationDataUnits"
@@ -238,7 +238,7 @@ I found implementations in Python, C, .NET, Java etc. but I found none in NodeJS
 As I use ioBroker as my smart home hub with a lot of NodeJS scripts I wanted to stay there - maybe parts
 of the script can be integrated into ioBroker in the future.
 
-### Reading the M-Bus Telegrams and APDUs.
+### Reading the M-Bus telegrams and APDUs.
 
 Reading the APDU (Application Protocol Data Units) from the raw serial port data is very well documented
 in the documentation of the electricity providers.
@@ -246,9 +246,9 @@ in the documentation of the electricity providers.
 For the data link layer I use the `TelegramReader` class to get single M-Bus telegrams. The data for a 
 single APDU may be split up in multiple M-Bus telegrams. The smart meters mentioned above usually use two
 M-Bus telegrams for one APDU. So on the transport layer level I use the `MultiTelegramReader` class to
-read the APDUs. Some parts of the encrypted DLMS/COSEM data is already read here.
+read the APDUs. Some parts of the encrypted DLMS/COSEM data is already decoded here.
 
-### Decrypting the encrypted APDU Payload
+### Decrypting the encrypted APDU payload
 
 Although the "Salzburg Netz" documentation says that the encryption is "AES128-CBC" it's most likely
 "AES-GCM". "AES-CBC" does not work and the documentation of the other electricity providers state "AES-GCM".
@@ -274,7 +274,7 @@ definition file into TypeScript objects.
 
 I then use these objects to read the APDU (see `cosem-data-reader.ts`). The DLMS/COSEM ASN.1 definitions are
 very broad and support a lot more data types than the smart meter uses to encode the data. So I have mostly 
-only implemented those data types and encoding variants which are actually used by the smart meter. 
+only implemented the data types and encoding variants which are actually used by the smart meter. 
 
 ### Extracting the OBIS values
 
