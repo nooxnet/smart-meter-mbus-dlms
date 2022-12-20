@@ -132,6 +132,8 @@ export class DebugSettings {
 	public static logObisValuesJson: false;             // custom format with decoded and readable values
 	public static logObisValuesPlain: false;            // plain obis values
 
+	public static logTimes: false;
+
 	public static read() {
 		DebugSettings.maxBytes = config.get('debug.maxBytes');
 		DebugSettings.maxTelegrams = config.get('debug.maxTelegrams');
@@ -154,6 +156,8 @@ export class DebugSettings {
 
 		DebugSettings.logObisValuesJson = config.get('debug.logObisValuesJson');
 		DebugSettings.logObisValuesPlain = config.get('debug.logObisValuesPlain');
+
+		DebugSettings.logTimes = config.get('debug.logTimes');
 	}
 }
 

@@ -4,12 +4,13 @@ import { ApplicationProtocolDataUnit } from "./application-protocol-data-unit";
 import { Result } from "./cosem/cosem-lib/asn-1-data-types";
 import { SimpleXmlProcessor } from "./simple-xml-processor";
 import { DataNotification } from "./result-interfaces";
+import { Tools } from './tools';
 
 export class DebugLogger {
 
-
 	private logSerialPortBuffers: Buffer[] = [];
 	private logSerialPortByteCount = 0;
+	private lastLogEpoch = 0;
 
 	public logSerialPortData(serialPortData: Buffer): void {
 		if(DebugSettings.logSerialPortMinBytes <= 1) {
@@ -91,6 +92,19 @@ export class DebugLogger {
 				console.log(obisValue.obisCode, obisValue.obisName, obisValue.stringValue);
 			}
 		}
+	}
+
+	public logTimes(info?: string): void {
+		const epoch = Date.now();
+		const diff = this.lastLogEpoch ? ((epoch - this.lastLogEpoch) / 1000).toString() : '-';
+
+		const localIsoDateTime = Tools.dateToLocalIsoWithMs(new Date(epoch));
+		if(info) {
+			console.log(`${localIsoDateTime} - ${diff} s - ${info}`);
+		} else {
+			console.log(`${localIsoDateTime} - ${diff} s - `);
+		}
+		this.lastLogEpoch = epoch;
 	}
 
 

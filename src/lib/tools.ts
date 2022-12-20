@@ -44,4 +44,18 @@ export class Tools {
 		return result;
 	}
 
+	public static dateToLocalIso(date: Date) {
+		const offset = date.getTimezoneOffset();
+		let isoString = new Date(date.getTime() - offset * 60 * 1000).toISOString(); //.substring(0, 23);
+		isoString = `${isoString.substring(0, 10)} ${isoString.substring(11, 19)}`;
+		return isoString;
+	}
+
+	public static dateToLocalIsoWithMs(date: Date) {
+		const offset = date.getTimezoneOffset();
+		let isoString = new Date(date.getTime() - offset * 60 * 1000).toISOString(); //.substring(0, 23);
+		isoString = `${isoString.substring(0, 10)} ${isoString.substring(11, 23)}`;
+		return isoString;
+	}
+
 }

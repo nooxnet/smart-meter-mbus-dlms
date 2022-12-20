@@ -109,6 +109,8 @@
 		// log extracted obis values
 		logObisValuesJson: false,        // custom format with decoded and readable values
 		logObisValuesPlain: true,        // obis values
+
+		logTimes: false,
 	}
 }
 

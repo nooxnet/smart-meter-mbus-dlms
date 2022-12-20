@@ -208,6 +208,7 @@ Start/restart/status:
 - `sudo systemctl start smartmeter.service`
 - `sudo systemctl restart smartmeter.service`
 - `sudo systemctl status smartmeter.service`
+- `sudo systemctl stop smartmeter.service`
 
 Verify:
 - `journalctl -u smartmeter.service`

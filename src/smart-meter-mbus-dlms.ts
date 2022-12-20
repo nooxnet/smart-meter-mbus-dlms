@@ -16,6 +16,7 @@ let applicationDataUnitCount = 0;
 let prematureStops = false;
 let port: SerialPort;
 const debugLogger = new DebugLogger();
+let serialPortLogtimeStarted = false;
 
 function main(): void {
 	Settings.read();
@@ -43,9 +44,14 @@ function main(): void {
 		serialPortByteCount += serialPortData.length;
 
 		// read single MBus telegrams
+		if(DebugSettings.logTimes && !serialPortLogtimeStarted) {
+			serialPortLogtimeStarted = true;
+			debugLogger.logTimes('first serial port bytes');
+		}
 		const telegramResultState = telegramReader.addRawData(serialPortData);
 		if(telegramResultState === TelegramState.available) {
 			const telegrams = telegramReader.getTelegrams();
+			if(DebugSettings.logTimes) debugLogger.logTimes('telegramReader.addRawData && telegramReader.getTelegrams');
 			telegramCount += telegrams.length;
 			debugLogger.logTelegrams(telegrams);
 
@@ -53,22 +59,29 @@ function main(): void {
 			const applicationDataUnitState = multiTelegramReader.addTelegrams(telegrams);
 			if(applicationDataUnitState === ApplicationDataState.available) {
 				const applicationDataUnits = multiTelegramReader.getApplicationDataUnits();
+				if(DebugSettings.logTimes) {
+					serialPortLogtimeStarted = false;
+					debugLogger.logTimes('multiTelegramReader.addTelegrams && multiTelegramReader.getApplicationDataUnits');
+				}
 				applicationDataUnitCount += applicationDataUnits.length;
 				debugLogger.logApplicationDataUnits(applicationDataUnits);
 
 				// analyze COSEM data
 				for(const applicationDataUnit of applicationDataUnits) {
 					const result = cosemDataReader.read(applicationDataUnit.decryptedPayload);
+					if(DebugSettings.logTimes) debugLogger.logTimes('cosemDataReader.read');
 					if(!result) continue;
 					debugLogger.logCosemData(result);
 
 					// extract OBIS values
 					const dataNotification = cosemObisDataProcessor.transform(result);
+					if(DebugSettings.logTimes) debugLogger.logTimes('cosemObisDataProcessor.transform');
 					if(!dataNotification) continue;
 					debugLogger.logObisData(dataNotification);
 
 					// publish to MQTT broker
 					mqttPublisher.publish(dataNotification);
+					if(DebugSettings.logTimes) debugLogger.logTimes('mqttPublisher.publish');
 				}
 			}
 		}
