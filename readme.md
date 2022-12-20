@@ -55,6 +55,9 @@ I just installed it in the users home directory of my RaspberryPi.
 Download the latest release archive "smart-meter-mbus-dlms.vx.y.z.tar.gz" from the Releases section of GitHub.
 (https://github.com/nooxnet/smart-meter-mbus-dlms).
 You can use wget or curl. 
+
+`wget https://github.com/nooxnet/smart-meter-mbus-dlms/releases/download/v1.0.1/smart-meter-mbus-dlms-vx.y.z.tar.gz`
+
 You can also download it to your Windows system and use WinSCP to transfer it.
 
 Alternatively you can download the files smart-meter-mbus-dlms.js and config/default.template.json5 form the 
@@ -63,7 +66,7 @@ config/ directory.
 
 Unpack the files (replace the version numbers):
 
-`tar -xzf smart-meter-mbus-dlms.vx.y.z.tar.gz`
+`tar -xzf smart-meter-mbus-dlms-vx.y.z.tar.gz`
 
 Switch to the script directory:
 
@@ -217,6 +220,15 @@ Verify:
 If you make any config changes, restart the service:
 
 `sudo systemctl restart smartmeter.service`
+
+## Read duration
+
+In noticed that the data arrives at my smart home hub (ioBroker) about two to three seconds after the 
+readout time as delivered within the data package of the smart meter. I enabled time logging and~~~~ saw that 
+the first bytes arrived about 650 ms after that time. I'm not sure if this is a delay or maybe a slightly 
+wrong time in either the smart meter or my Raspberry Pi. Receiving of the first telegram is completed about 
+1200 ms later. The second another 600 ms later. This seems reasonable considering the baud rate of 2400.
+Everything else (including MQTT publish) lasts for about 50 ms. So a total of 2500 ms.
 
 ## Implementation details
 
