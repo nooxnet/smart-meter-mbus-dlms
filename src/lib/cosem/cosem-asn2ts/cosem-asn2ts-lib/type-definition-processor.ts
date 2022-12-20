@@ -36,12 +36,12 @@ export class TypeDefinitionProcessor {
 	constructor(public name: string, public rawText: string) {
 	}
 
-	private getSaveName(): string {
+	private getSafeName(): string {
 		return this.name.replace(/\W+/g,"_");
 	}
 
 	public generateCode(): string {
-		const saveName = this.getSaveName();
+		const saveName = this.getSafeName();
 		const tagString = this.tag !== undefined ? `\n\ttag: ${this.tag},` : '';
 		const customTagString = this.customTag ? `\n\tcustomTag: '${this.customTag}',` : '';
 		const customTypeString = this.customType ? `\n\tcustomType: '${this.customType}',` : '';
@@ -85,7 +85,7 @@ export class TypeDefinitionProcessor {
 	}
 
 	public generateAssignmentParts(): string[] {
-		return [this.name, this.getSaveName()];
+		return [this.name, this.getSafeName()];
 	}
 
 	public process(): string[] {

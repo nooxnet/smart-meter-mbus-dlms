@@ -238,7 +238,7 @@ I found implementations in Python, C, .NET, Java etc. but I found none in NodeJS
 As I use ioBroker as my smart home hub with a lot of NodeJS scripts I wanted to stay there - maybe parts
 of the script can be integrated into ioBroker in the future.
 
-### Reading the M-Bus telegrams and APDUs.
+### Reading the M-Bus telegrams and APDUs
 
 Reading the APDU (Application Protocol Data Units) from the raw serial port data is very well documented
 in the documentation of the electricity providers.
