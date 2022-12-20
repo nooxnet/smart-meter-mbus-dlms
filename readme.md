@@ -224,7 +224,7 @@ If you make any config changes, restart the service:
 ## Read duration
 
 In noticed that the data arrives at my smart home hub (ioBroker) about two to three seconds after the 
-readout time as delivered within the data package of the smart meter. I enabled time logging and~~~~ saw that 
+readout time as delivered within the data package of the smart meter. I enabled time logging and saw that 
 the first bytes arrived about 650 ms after that time. I'm not sure if this is a delay or maybe a slightly 
 wrong time in either the smart meter or my Raspberry Pi. Receiving of the first telegram is completed about 
 1200 ms later. The second another 600 ms later. This seems reasonable considering the baud rate of 2400.
