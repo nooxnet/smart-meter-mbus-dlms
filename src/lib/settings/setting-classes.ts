@@ -45,6 +45,7 @@ export class MqttSettings {
 
 	public static host: string = '';
 	public static port: number = 1883;
+	public static rejectUnauthorized : boolean = false;
 	public static clientId: string = '';
 	public static username: string = '';
 	public static password: string = '';
@@ -71,6 +72,7 @@ export class MqttSettings {
 
 		MqttSettings.host = config.get('mqtt.host');
 		MqttSettings.port = config.get('mqtt.port');
+		MqttSettings.rejectUnauthorized = config.get('mqtt.rejectUnauthorized')
 		MqttSettings.clientId = config.get('mqtt.clientId');
 		MqttSettings.username = config.get('mqtt.username');
 		MqttSettings.password = config.get('mqtt.password');
