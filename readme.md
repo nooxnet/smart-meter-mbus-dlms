@@ -145,6 +145,16 @@ yet to the MQTT broker, but you can see what would have been published.
 
 You can then play around with the MQTT settings. If everything is fine disable "testMode".
 
+### Using TLS secured MQTT
+
+If you have configured TLS for your mosquitto server and 
+you are using a self signed certificate, then you can
+disable certificate verification via 
+`mqtt.rejectUnauthorized = false`
+
+For more information about how to generate the proper keys
+for your mosquitto server, check [this FAQ article](https://community.home-assistant.io/t/solved-mqtt-with-ssl-tls-not-working-with-home-assistant/180361/11)
+
 ## Create a service for the script
 
 Before you create a service I'd suggest to disable all logging. So in the "debug" section of the 

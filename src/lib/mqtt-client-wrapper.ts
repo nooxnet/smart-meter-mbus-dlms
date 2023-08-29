@@ -15,7 +15,8 @@ export class MqttClientWrapper {
 
 			username: MqttSettings.username,
 			password: MqttSettings.password,
-			clean: true
+			clean: true,
+			rejectUnauthorized: MqttSettings.rejectUnauthorized
 		};
 		if(MqttSettings.testMode) {
 			if(!MqttSettings.testModeNoLogging) {
